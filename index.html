@@ -412,9 +412,9 @@
                 font-size: 16px;
             }
 
-            /* Hacer el iframe responsive en móviles */
-            #chatbase-iframe-container {
-                width: calc(100vw - 40px) !important;
+            /* Hacer el chat container responsive en móviles */
+            #chatbase-chat-container {
+                width: calc(100vw - 20px) !important;
                 height: calc(100vh - 100px) !important;
                 bottom: 10px !important;
                 right: 10px !important;
@@ -623,12 +623,15 @@
                 if (useIframeMode) {
                     // Método iframe (más estable)
                     const isMobile = window.innerWidth <= 768;
+                    const chatContainer = document.createElement('div');
+                    chatContainer.id = 'chatbase-chat-container';
+                    
                     const iframeContainer = document.createElement('div');
                     iframeContainer.id = 'chatbase-iframe-container';
                     
                     if (isMobile) {
                         // Estilo móvil
-                        iframeContainer.style.cssText = `
+                        chatContainer.style.cssText = `
                             position: fixed;
                             bottom: 10px;
                             right: 10px;
@@ -636,6 +639,14 @@
                             width: calc(100vw - 20px);
                             height: calc(100vh - 100px);
                             z-index: 9999;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                        `;
+                        
+                        iframeContainer.style.cssText = `
+                            width: 100%;
+                            height: calc(100% - 60px);
                             border-radius: 16px;
                             overflow: hidden;
                             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -643,13 +654,21 @@
                         `;
                     } else {
                         // Estilo desktop
-                        iframeContainer.style.cssText = `
+                        chatContainer.style.cssText = `
                             position: fixed;
                             bottom: 20px;
                             right: 20px;
                             width: 400px;
-                            height: 600px;
+                            height: 650px;
                             z-index: 9999;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                        `;
+                        
+                        iframeContainer.style.cssText = `
+                            width: 100%;
+                            height: calc(100% - 60px);
                             border-radius: 16px;
                             overflow: hidden;
                             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
@@ -657,26 +676,41 @@
                         `;
                     }
 
-                    // Botón de cerrar en el contenedor
+                    // Botón bubble debajo del chat
                     const closeBtn = document.createElement('button');
                     closeBtn.innerHTML = '×';
                     closeBtn.style.cssText = `
-                        position: absolute;
-                        top: 10px;
-                        right: 10px;
-                        background: rgba(0, 0, 0, 0.5);
+                        margin-top: 10px;
+                        background: #ef4444;
                         color: white;
                         border: none;
-                        width: 30px;
-                        height: 30px;
+                        width: 45px;
+                        height: 45px;
                         border-radius: 50%;
                         cursor: pointer;
-                        font-size: 20px;
-                        z-index: 10;
+                        font-size: 24px;
+                        font-weight: bold;
+                        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
                         display: flex;
                         align-items: center;
                         justify-content: center;
+                        transition: all 0.3s ease;
+                        z-index: 10;
                     `;
+                    
+                    // Hover effect
+                    closeBtn.addEventListener('mouseenter', () => {
+                        closeBtn.style.background = '#dc2626';
+                        closeBtn.style.transform = 'scale(1.1)';
+                        closeBtn.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+                    });
+                    
+                    closeBtn.addEventListener('mouseleave', () => {
+                        closeBtn.style.background = '#ef4444';
+                        closeBtn.style.transform = 'scale(1)';
+                        closeBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+                    });
+                    
                     closeBtn.onclick = () => closeChatbase();
 
                     const iframe = document.createElement('iframe');
@@ -688,11 +722,12 @@
                     `;
                     iframe.allow = "microphone";
 
-                    iframeContainer.appendChild(closeBtn);
                     iframeContainer.appendChild(iframe);
-                    document.body.appendChild(iframeContainer);
+                    chatContainer.appendChild(iframeContainer);
+                    chatContainer.appendChild(closeBtn);
+                    document.body.appendChild(chatContainer);
 
-                    currentChatbaseInstance = iframeContainer;
+                    currentChatbaseInstance = chatContainer;
                 } else {
                     // Método widget (puede tener conflictos)
                     const chatbaseNamespace = `chatbase_${Date.now()}`;
@@ -734,7 +769,13 @@
         // Cerrar Chatbase
         function closeChatbase() {
             try {
-                // Remover el contenedor del iframe si existe
+                // Remover el contenedor principal del chat si existe
+                const chatContainer = document.getElementById('chatbase-chat-container');
+                if (chatContainer) {
+                    chatContainer.remove();
+                }
+                
+                // También remover el contenedor del iframe si existe por separado
                 const iframeContainer = document.getElementById('chatbase-iframe-container');
                 if (iframeContainer) {
                     iframeContainer.remove();
@@ -747,6 +788,7 @@
 
                 // Limpiar TODOS los elementos de Chatbase
                 const selectorsToClean = [
+                    '#chatbase-chat-container',
                     '#chatbase-iframe-container',
                     '[id*="chatbase"]',
                     '[id*="cb-"]',
