@@ -1,0 +1,22 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run-server": "http-server ./ -p 3000 -o -s",
+    "dev": "live-server . --port=3000 --open --wait=200"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "pnpm": {
+  },
+  "resolutions": {
+  }
+}
