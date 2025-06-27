@@ -1,1 +1,67 @@
+#!/usr/bin/env sh
+
+echo "
+╔═══════════════════════════════════════════════════════════╗
+║                  🔒 PRE-COMMIT CHECKS                    ║
+╚═══════════════════════════════════════════════════════════╝
+"
+
+# Check if we're trying to commit directly to protected branches
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+echo "🔍 Branch protection check..."
+echo "   Current branch: $CURRENT_BRANCH"
+
+# Check against protected branches (including master)
+if [ "$CURRENT_BRANCH" = "dev" ] || [ "$CURRENT_BRANCH" = "main" ] || [ "$CURRENT_BRANCH" = "master" ]; then
+        echo ""
+        echo "❌ COMMIT BLOCKED!"
+        echo ""
+        echo "🚫 Direct commits to '$CURRENT_BRANCH' branch are not allowed"
+        echo ""
+        echo "📋 Required workflow:"
+        echo "   1. Create a feature branch from dev:"
+        echo "      git checkout dev"
+        echo "      git pull origin dev"
+        echo "      git checkout -b feature/your-feature-name"
+        echo ""
+        echo "   2. Make your changes and commit to the feature branch"
+        echo ""
+        echo "   3. Push your feature branch:"
+        echo "      git push origin feature/your-feature-name"
+        echo ""
+        echo "   4. Create a Pull Request to merge into dev"
+        echo "      This will trigger GitHub Actions for automated verification"
+        echo ""
+        echo "💡 This ensures:"
+        echo "   • All changes go through CI/CD verification"
+        echo "   • Code review process is followed"
+        echo "   • Quality standards are maintained"
+        echo ""
+        
+        # Special message for master branch
+        if [ "$CURRENT_BRANCH" = "master" ]; then
+            echo "⚠️  MASTER BRANCH PROTECTION:"
+            echo "   • Master is for production releases only"
+            echo "   • All changes must come from dev via PR"
+            echo "   • Only release managers should merge to master"
+            echo ""
+        fi
+        
+        exit 1
+fi
+
+echo "✅ Branch protection check passed!"
+echo ""
+
+# Run lint-staged for code quality
+echo "2️⃣  Running code quality checks..."
+echo "───────────────────────────────────────────"
 npx lint-staged
+
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "╔═══════════════════════════════════════════════════════════╗"
+    echo "║          ✅ ALL PRE-COMMIT CHECKS PASSED! 🎉            ║"
+    echo "╚═══════════════════════════════════════════════════════════╝"
+fi
