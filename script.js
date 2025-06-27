@@ -153,16 +153,11 @@ function createFloatingChatButton(bot, buttonText) {
     floatingButton.onclick = () => {
         if (floatingButton.disabled) return; // No hacer nada si está deshabilitado
         
-        // Deshabilitar el botón durante la carga
-        setFloatingButtonEnabled(false);
-        
         if (lastMinimizedBotId && chatInstances[lastMinimizedBotId]) {
             // Restaurar la última instancia minimizada
-            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             restoreChatInstance(lastMinimizedBotId);
         } else {
             // Abrir el bot por defecto
-            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             openChatbase(bot.chatbaseId, bot.id);
         }
     };
@@ -239,7 +234,6 @@ function openChatbase(chatbotId, botId) {
         } else {
             // Si está minimizado, restaurarlo y minimizar cualquier otra instancia visible
             console.log('Restaurando instancia minimizada');
-            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             restoreChatInstance(botId);
         }
         return;
@@ -255,7 +249,6 @@ function openChatbase(chatbotId, botId) {
 
     // Crear nueva instancia
     setButtonLoading(button, true);
-    updateFloatingChatButton(); // Ocultar floating button inmediatamente
     openChatbaseInstance(chatbotId, botId);
 }
 
@@ -348,6 +341,11 @@ function restoreChatInstance(botId) {
         return;
     }
     
+    // Remover floating button inmediatamente al iniciar la restauración
+    const existingFloatingButton = document.getElementById('floating-chat-button');
+    if (existingFloatingButton) {
+        existingFloatingButton.remove();
+    }
     
     // Si hay otra instancia visible de un bot diferente, minimizarla
     if (currentBotId && currentBotId !== botId && chatInstances[currentBotId] && chatInstances[currentBotId].isVisible) {
@@ -398,6 +396,11 @@ function restoreChatInstance(botId) {
 // Función auxiliar para abrir la instancia de Chatbase
 function openChatbaseInstance(chatbotId, botId) {
     try {
+        // Remover floating button inmediatamente al iniciar la carga
+        const existingFloatingButton = document.getElementById('floating-chat-button');
+        if (existingFloatingButton) {
+            existingFloatingButton.remove();
+        }
 
         if (useIframeMode) {
             // Método iframe (más estable)
