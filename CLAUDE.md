@@ -15,10 +15,11 @@ This is a client-side web application that provides a chatbot interface for mult
 ## Architecture
 
 ### Core Files
-- `index.html` - Main HTML structure
-- `script.js` - Core application logic (~890 lines)
-- `styles.css` - Complete CSS styling
+- `src/index.html` - Main HTML structure
+- `src/script.js` - Core application logic (~890 lines)
+- `src/styles.css` - Complete CSS styling
 - `package.json` - Project configuration
+- `vite.config.js` - Vite build configuration
 
 ### Key JavaScript Patterns
 

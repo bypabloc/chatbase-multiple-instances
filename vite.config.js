@@ -8,9 +8,12 @@ export default defineConfig({
     host: true
   },
   
+  // Configuración de la estructura del proyecto
+  root: 'src',
+  
   // Configuración del build
   build: {
-    outDir: 'dist',
+    outDir: '../dist',
     assetsDir: 'assets',
     minify: 'terser',
     sourcemap: false,
@@ -61,7 +64,7 @@ export default defineConfig({
   },
   
   // Configuración de assets
-  publicDir: 'public',
+  publicDir: '../public',
   
   // Configuración base para deployment
   base: './',
