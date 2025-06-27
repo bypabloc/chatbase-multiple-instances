@@ -8,28 +8,32 @@ const defaultBots = [
         name: 'Sofi',
         description: 'Necesitas conversar con alguien que te entienda.',
         chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
-        avatar: null
+        avatar: null,
+        isDefault: true
     },
     {
         id: 'cami',
         name: 'Cami',
         description: 'Quieres un estrategia para negociar tus deudas.',
         chatbaseId: 'SriqJSZWPW_Xkfws0rwKl',
-        avatar: null
+        avatar: null,
+        isDefault: false
     },
     {
         id: 'lucas',
         name: 'Lucas',
         description: 'Tu plata no te está alcanzando hasta fin de mes.',
         chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
-        avatar: null
+        avatar: null,
+        isDefault: false
     },
     {
         id: 'carmen',
         name: 'Carmen',
         description: 'No sabes qué necesitas, partamos por ahí.',
         chatbaseId: 'SriqJSZWPW_Xkfws0rwKl',
-        avatar: null
+        avatar: null,
+        isDefault: false
     }
 ];
 
@@ -39,6 +43,7 @@ let bots = [...defaultBots];
 // Variable para rastrear las instancias de Chatbase
 let chatInstances = {}; // Almacena las instancias por botId
 let currentBotId = null;
+let lastMinimizedBotId = null; // Última instancia minimizada
 let isTransitioning = false;
 let useIframeMode = true; // Usar iframe por defecto para evitar conflictos
 
@@ -49,6 +54,7 @@ function loadBots() {
         bots = JSON.parse(savedBots);
     }
     renderExperts();
+    updateFloatingChatButton();
 }
 
 // Guardar bots en localStorage
@@ -67,9 +73,80 @@ function loadDefaultBots() {
         saveBots();
         renderExperts();
         renderBotList();
+        updateFloatingChatButton();
         
         console.log('Datos por defecto restaurados');
     }
+}
+
+// Obtener el bot por defecto
+function getDefaultBot() {
+    return bots.find(bot => bot.isDefault) || bots[0];
+}
+
+// Establecer bot por defecto
+function setDefaultBot(botId) {
+    bots.forEach(bot => {
+        bot.isDefault = (bot.id === botId);
+    });
+    saveBots();
+    updateFloatingChatButton();
+}
+
+// Crear/actualizar el bubble button flotante
+function updateFloatingChatButton() {
+    // Remover bubble button existente si existe
+    const existingButton = document.getElementById('floating-chat-button');
+    if (existingButton) {
+        existingButton.remove();
+    }
+    
+    // Determinar qué mostrar
+    let targetBot = null;
+    let buttonText = '';
+    
+    if (lastMinimizedBotId && chatInstances[lastMinimizedBotId]) {
+        // Mostrar la última instancia minimizada
+        targetBot = bots.find(b => b.id === lastMinimizedBotId);
+        buttonText = `Abrir ${targetBot.name}`;
+    } else if (!currentBotId) {
+        // No hay chat activo, mostrar el bot por defecto
+        targetBot = getDefaultBot();
+        buttonText = `Abrir ${targetBot.name}`;
+    }
+    
+    if (targetBot) {
+        createFloatingChatButton(targetBot, buttonText);
+    }
+}
+
+// Crear el bubble button flotante
+function createFloatingChatButton(bot, buttonText) {
+    const floatingButton = document.createElement('button');
+    floatingButton.id = 'floating-chat-button';
+    floatingButton.title = buttonText;
+    
+    // SVG icono de chat
+    floatingButton.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    
+    floatingButton.className = 'floating-chat-button';
+    
+    // Click handler
+    floatingButton.onclick = () => {
+        if (lastMinimizedBotId && chatInstances[lastMinimizedBotId]) {
+            // Restaurar la última instancia minimizada
+            restoreChatInstance(lastMinimizedBotId);
+        } else {
+            // Abrir el bot por defecto
+            openChatbase(bot.chatbaseId, bot.id);
+        }
+    };
+    
+    document.body.appendChild(floatingButton);
 }
 
 // Renderizar expertos
@@ -234,6 +311,8 @@ function minimizeChatInstance(botId) {
     
     updateButtonState(botId, 'minimized');
     currentBotId = null;
+    lastMinimizedBotId = botId;
+    updateFloatingChatButton();
     console.log(`Bot ${botId} minimizado exitosamente`);
 }
 
@@ -285,6 +364,10 @@ function restoreChatInstance(botId) {
     
     updateButtonState(botId, 'active');
     currentBotId = botId;
+    if (lastMinimizedBotId === botId) {
+        lastMinimizedBotId = null;
+    }
+    updateFloatingChatButton();
     console.log(`Bot ${botId} restaurado exitosamente`);
 }
 
@@ -401,6 +484,7 @@ function openChatbaseInstance(chatbotId, botId) {
             // Manejar cuando el iframe termine de cargar
             iframe.onload = () => {
                 updateButtonState(botId, 'active');
+                updateFloatingChatButton();
                 isTransitioning = false;
             };
 
@@ -582,7 +666,14 @@ function renderBotList() {
                 <div class="bot-id">ID: ${bot.chatbaseId}</div>
                 ${bot.avatar ? '<div class="bot-id">Avatar: Personalizado</div>' : '<div class="bot-id">Avatar: Iniciales</div>'}
             </div>
-            <button class="delete-bot" onclick="deleteBot(${index})">Eliminar</button>
+            <div class="bot-controls">
+                <label class="default-radio-label">
+                    <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
+                           onchange="setDefaultBot('${bot.id}')" class="default-radio">
+                    <span class="radio-text">Por defecto</span>
+                </label>
+                <button class="delete-bot" onclick="deleteBot(${index})">Eliminar</button>
+            </div>
         `;
         botList.appendChild(botItem);
     });
@@ -605,7 +696,8 @@ function addBot() {
         name: name,
         description: description,
         chatbaseId: chatbaseId,
-        avatar: avatar || null // Si no hay avatar, usar null
+        avatar: avatar || null, // Si no hay avatar, usar null
+        isDefault: false // Los nuevos bots no son por defecto
     };
 
     bots.push(newBot);
@@ -675,6 +767,7 @@ window.openConfig = openConfig;
 window.closeConfig = closeConfig;
 window.addBot = addBot;
 window.deleteBot = deleteBot;
+window.setDefaultBot = setDefaultBot;
 window.loadDefaultBots = loadDefaultBots;
 window.debugChatInstances = debugChatInstances;
 

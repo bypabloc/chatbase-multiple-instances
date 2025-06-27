@@ -334,6 +334,30 @@ h1 {
     align-items: center;
 }
 
+.bot-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.default-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #64748b;
+}
+
+.default-radio {
+    margin: 0;
+    cursor: pointer;
+}
+
+.radio-text {
+    user-select: none;
+}
+
 .bot-info {
     flex: 1;
 }
@@ -430,6 +454,37 @@ h1 {
 
 .load-default-button:hover {
     background: #d97706;
+}
+
+/* Floating Chat Button */
+.floating-chat-button {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 60px;
+    height: 60px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 0;
+}
+
+.floating-chat-button:hover {
+    background: #1d4ed8;
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(37, 99, 235, 0.5);
+}
+
+.floating-chat-button:active {
+    transform: scale(0.95);
 }
 
 /* Responsive */
