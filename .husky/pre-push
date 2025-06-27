@@ -1,0 +1,69 @@
+#!/usr/bin/env sh
+
+echo "
+╔═══════════════════════════════════════════════════════════╗
+║                  🚀 PRE-PUSH CHECKS                       ║
+╚═══════════════════════════════════════════════════════════╝
+"
+
+# Check Node.js version
+if [ -f .nvmrc ]; then
+    REQUIRED_NODE_VERSION=$(cat .nvmrc | tr -d 'v')
+    CURRENT_NODE_VERSION=$(node --version | tr -d 'v')
+    
+    echo "🔄 Node.js version check..."
+    echo "   Required: v$REQUIRED_NODE_VERSION"
+    echo "   Current:  v$CURRENT_NODE_VERSION"
+    
+    if [ "$CURRENT_NODE_VERSION" != "$REQUIRED_NODE_VERSION" ]; then
+        echo ""
+        echo "⚠️  WARNING: Node.js version mismatch!"
+        echo "💡 Please run 'nvm use' before pushing to avoid potential issues"
+        echo "   Continuing with current version..."
+    else
+        echo "✅ Node.js version is correct"
+    fi
+    echo ""
+fi
+
+# 1. Check code quality
+echo "1️⃣  Checking code quality with Biome..."
+echo "───────────────────────────────────────────"
+pnpm ci:check
+if [ $? -ne 0 ]; then
+    echo "
+❌ Code quality check failed!
+💡 Run 'pnpm check' to fix issues automatically
+"
+    exit 1
+fi
+echo "✅ Code quality check passed!"
+echo ""
+
+# 2. Run tests with coverage
+echo "2️⃣  Running tests with coverage..."
+echo "───────────────────────────────────────────"
+pnpm test:coverage
+if [ $? -ne 0 ]; then
+    echo "
+❌ Tests failed or coverage is below threshold!
+
+📊 Required coverage thresholds:
+   • Lines: 90%
+   • Functions: 75%
+   • Branches: 88%
+   • Statements: 90%
+
+💡 Tips:
+   • Run 'pnpm test:coverage' to see detailed results
+   • Check coverage/index.html for visual report
+   • Add more tests to increase coverage
+"
+    exit 1
+fi
+
+echo "
+╔═══════════════════════════════════════════════════════════╗
+║          ✅ ALL PRE-PUSH CHECKS PASSED! 🎉               ║
+╚═══════════════════════════════════════════════════════════╝
+"

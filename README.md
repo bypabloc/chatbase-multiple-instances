@@ -1,5 +1,10 @@
 # Chatbase - Plataforma de Asesores Financieros IA
 
+[![CI/CD](https://github.com/bypabloc/chatbase-multiple-instances/actions/workflows/verify-pr.yml/badge.svg)](https://github.com/bypabloc/chatbase-multiple-instances/actions/workflows/verify-pr.yml)
+[![Coverage](https://img.shields.io/badge/coverage-93%25-brightgreen.svg)](./coverage/index.html)
+[![Code Style](https://img.shields.io/badge/code_style-biome-blue.svg)](https://biomejs.dev)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Una aplicación web moderna que permite a los usuarios interactuar con múltiples asesores financieros impulsados por inteligencia artificial a través de la plataforma Chatbase.co.
 
 ## 🚀 Características
@@ -25,12 +30,17 @@ Una aplicación web moderna que permite a los usuarios interactuar con múltiple
    cd chatbase
    ```
 
-2. **Instala las dependencias**:
+2. **Usa la versión correcta de Node.js**:
+   ```bash
+   nvm use  # Usar Node.js v22.14.0 especificado en .nvmrc
+   ```
+
+3. **Instala las dependencias**:
    ```bash
    pnpm install
    ```
 
-3. **Inicia el servidor de desarrollo**:
+4. **Inicia el servidor de desarrollo**:
    ```bash
    pnpm run dev
    ```
@@ -123,6 +133,15 @@ pnpm run build
 
 # Previsualizar build de producción
 pnpm run preview
+
+# Ejecutar tests con cobertura
+pnpm run test:coverage
+
+# Verificar calidad del código
+pnpm run check
+
+# Ejecutar verificaciones pre-push
+pnpm run prepush
 ```
 
 ## 📱 Uso en Producción
