@@ -125,13 +125,6 @@ function updateFloatingChatButton() {
     }
 }
 
-// Deshabilitar/habilitar el floating button
-function setFloatingButtonEnabled(enabled) {
-    const floatingButton = document.getElementById('floating-chat-button');
-    if (floatingButton) {
-        floatingButton.disabled = !enabled;
-    }
-}
 
 // Crear el bubble button flotante
 function createFloatingChatButton(bot, buttonText) {
@@ -467,14 +460,14 @@ function openChatbaseInstance(chatbotId, botId) {
             `;
             closeBtn.style.cssText = `
                 margin-top: 10px;
-                background: #ef4444;
+                background: #2563eb;
                 color: white;
                 border: none;
                 width: 45px;
                 height: 45px;
                 border-radius: 50%;
                 cursor: pointer;
-                box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+                box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -485,15 +478,15 @@ function openChatbaseInstance(chatbotId, botId) {
             
             // Hover effect
             closeBtn.addEventListener('mouseenter', () => {
-                closeBtn.style.background = '#dc2626';
+                closeBtn.style.background = '#1d4ed8';
                 closeBtn.style.transform = 'scale(1.1)';
-                closeBtn.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.4)';
+                closeBtn.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)';
             });
             
             closeBtn.addEventListener('mouseleave', () => {
-                closeBtn.style.background = '#ef4444';
+                closeBtn.style.background = '#2563eb';
                 closeBtn.style.transform = 'scale(1)';
-                closeBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
+                closeBtn.style.boxShadow = '0 4px 15px rgba(37, 99, 235, 0.3)';
             });
             
             // Botón X solo minimiza, no destruye
