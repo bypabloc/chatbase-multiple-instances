@@ -120,7 +120,7 @@ function openChatbase(chatbotId, botId) {
             console.log('Minimizando instancia visible');
             minimizeChatInstance(botId);
         } else {
-            // Si está minimizado, restaurarlo
+            // Si está minimizado, restaurarlo y minimizar cualquier otra instancia visible
             console.log('Restaurando instancia minimizada');
             restoreChatInstance(botId);
         }
@@ -129,10 +129,10 @@ function openChatbase(chatbotId, botId) {
 
     console.log('No existe instancia, creando nueva');
     
-    // Si hay otra instancia de un bot diferente, destruirla completamente
-    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId]) {
-        console.log(`Destruyendo instancia anterior: ${currentBotId}`);
-        destroyChatInstance(currentBotId);
+    // Si hay otra instancia visible de un bot diferente, minimizarla (no destruirla)
+    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId] && chatInstances[currentBotId].isVisible) {
+        console.log(`Minimizando instancia anterior: ${currentBotId}`);
+        minimizeChatInstance(currentBotId);
     }
 
     // Crear nueva instancia
@@ -175,9 +175,9 @@ function updateButtonState(botId, state) {
             console.log(`Botón actualizado a MINIMIZAR para ${bot.name}`);
             break;
         case 'minimized':
-            button.classList.add('minimized');
-            button.textContent = `RESTAURAR ${bot.name.toUpperCase()}`;
-            console.log(`Botón actualizado a RESTAURAR para ${bot.name}`);
+            // Cuando se minimiza, volver al estado original
+            button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`;
+            console.log(`Botón actualizado a HABLAR CON (minimizado) para ${bot.name}`);
             break;
         case 'loading':
             button.classList.add('loading');
@@ -227,10 +227,10 @@ function restoreChatInstance(botId) {
         return;
     }
     
-    // Si hay otra instancia visible de un bot diferente, destruirla
-    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId]) {
-        console.log(`Destruyendo instancia visible anterior: ${currentBotId}`);
-        destroyChatInstance(currentBotId);
+    // Si hay otra instancia visible de un bot diferente, minimizarla
+    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId] && chatInstances[currentBotId].isVisible) {
+        console.log(`Minimizando instancia visible anterior: ${currentBotId}`);
+        minimizeChatInstance(currentBotId);
     }
     
     const instance = chatInstances[botId];
@@ -646,21 +646,6 @@ function debugChatInstances() {
     console.log('=======================');
 }
 
-// Función de debug para verificar el estado de las instancias
-function debugChatInstances() {
-    console.log('=== Estado de Chat Instances ===');
-    console.log('Total instancias:', Object.keys(chatInstances).length);
-    console.log('Bot actual:', currentBotId);
-    
-    Object.keys(chatInstances).forEach(botId => {
-        const instance = chatInstances[botId];
-        console.log(`\nBot: ${botId}`);
-        console.log('- Visible:', instance.isVisible);
-        console.log('- Container existe:', !!instance.container);
-        console.log('- Container en DOM:', instance.container ? document.body.contains(instance.container) : false);
-        console.log('- Display style:', instance.container ? instance.container.style.display : 'N/A');
-    });
-}
 
 // Hacer funciones globales para los onclick
 window.openChatbase = openChatbase;
