@@ -14,9 +14,12 @@ Este proyecto utiliza **Git hooks** para asegurar la calidad del código antes d
 
 Antes de cada commit, automáticamente:
 
-1. **Formatea** el código con Biome
-2. **Verifica** errores de linting
-3. **Bloquea** el commit si hay errores
+1. **Protección de Ramas**: Bloquea commits directos a `dev`, `main`, `master`
+   - **dev**: Para desarrollo activo (requiere PR)
+   - **master**: Solo para releases de producción (requiere PR desde dev)
+2. **Formatea** el código con Biome
+3. **Verifica** errores de linting
+4. **Bloquea** el commit si hay errores
 
 ### 🔸 Pre-push
 
@@ -120,9 +123,44 @@ git commit --no-verify
 git stash pop
 ```
 
+## 🌳 Estrategia de Branching
+
+### Ramas Protegidas
+
+#### 🔒 `master` - Producción
+- **Propósito**: Releases estables para producción
+- **Protección**: Solo merges desde `dev` via PR
+- **Acceso**: Solo release managers
+- **Workflow**: `dev` → PR → `master`
+
+#### 🔒 `dev` - Desarrollo
+- **Propósito**: Integración de features
+- **Protección**: Solo merges desde feature branches via PR  
+- **Workflow**: `feature/*` → PR → `dev`
+
+#### ✅ `feature/*` - Features
+- **Propósito**: Desarrollo de funcionalidades
+- **Ejemplo**: `feature/user-auth`, `feature/payment-gateway`
+- **Workflow**: Libre desarrollo con commits directos
+
+### Flujo Completo de Release
+```bash
+# 1. Desarrollo
+feature/new-feature → (PR) → dev
+
+# 2. Testing en dev
+# Verificaciones automáticas, QA manual
+
+# 3. Release a producción  
+dev → (PR) → master → deploy
+```
+
 ## 🎯 Beneficios
 
 - ✅ **Código consistente**: Mismo estilo en todo el proyecto
 - ✅ **Menos errores**: Detecta problemas antes del commit
 - ✅ **PR más limpios**: Sin cambios de formato innecesarios
 - ✅ **Ahorro de tiempo**: No más revisiones de estilo manual
+- ✅ **Release controlado**: Master solo contiene código probado
+- ✅ **Historial limpio**: Commits organizados por features
+- ✅ **Rollback seguro**: Fácil reversión de cambios problemáticos
