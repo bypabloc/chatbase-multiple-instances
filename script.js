@@ -2,43 +2,10 @@
 // Puedes cambiar useIframeMode a false si prefieres el widget, pero puede causar errores
 
 // Configuración por defecto de bots
-const defaultBots = [
-    {
-        id: 'sofi',
-        name: 'Sofi',
-        description: 'Necesitas conversar con alguien que te entienda.',
-        chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
-        avatar: null,
-        isDefault: true
-    },
-    {
-        id: 'cami',
-        name: 'Cami',
-        description: 'Quieres un estrategia para negociar tus deudas.',
-        chatbaseId: 'SriqJSZWPW_Xkfws0rwKl',
-        avatar: null,
-        isDefault: false
-    },
-    {
-        id: 'lucas',
-        name: 'Lucas',
-        description: 'Tu plata no te está alcanzando hasta fin de mes.',
-        chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
-        avatar: null,
-        isDefault: false
-    },
-    {
-        id: 'carmen',
-        name: 'Carmen',
-        description: 'No sabes qué necesitas, partamos por ahí.',
-        chatbaseId: 'SriqJSZWPW_Xkfws0rwKl',
-        avatar: null,
-        isDefault: false
-    }
-];
+let defaultBots = [];
 
 // Configuración actual de bots (se carga desde localStorage o usa defaultBots)
-let bots = [...defaultBots];
+let bots = [];
 
 // Variable para rastrear las instancias de Chatbase
 let chatInstances = {}; // Almacena las instancias por botId
@@ -47,14 +14,49 @@ let lastMinimizedBotId = null; // Última instancia minimizada
 let isTransitioning = false;
 let useIframeMode = true; // Usar iframe por defecto para evitar conflictos
 
-// Cargar bots guardados del localStorage
-function loadBots() {
-    const savedBots = localStorage.getItem('chatbaseBots');
-    if (savedBots) {
-        bots = JSON.parse(savedBots);
+// Cargar configuración por defecto desde archivo JSON
+async function loadDefaultBotsFromFile() {
+    try {
+        const response = await fetch('./defaultBots.json');
+        const data = await response.json();
+        defaultBots = data;
+        return data;
+    } catch (error) {
+        console.error('Error cargando defaultBots.json:', error);
+        // Fallback en caso de error
+        defaultBots = [
+            {
+                id: 'sofi',
+                name: 'Sofi',
+                description: 'Necesitas conversar con alguien que te entienda.',
+                chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
+                avatar: null,
+                isDefault: true
+            }
+        ];
+        return defaultBots;
     }
-    renderExperts();
-    updateFloatingChatButton();
+}
+
+// Cargar bots guardados del localStorage
+async function loadBots() {
+    try {
+        // Primero cargar la configuración por defecto
+        await loadDefaultBotsFromFile();
+        
+        const savedBots = localStorage.getItem('chatbaseBots');
+        if (savedBots) {
+            bots = JSON.parse(savedBots);
+        } else {
+            bots = [...defaultBots];
+        }
+        
+        // Solo renderizar después de que bots esté cargado
+        renderExperts();
+        updateFloatingChatButton();
+    } catch (error) {
+        console.error('Error cargando bots:', error);
+    }
 }
 
 // Guardar bots en localStorage
@@ -63,24 +65,34 @@ function saveBots() {
 }
 
 // Restaurar datos por defecto
-function loadDefaultBots() {
+async function restoreDefaultBots() {
     if (confirm('¿Estás seguro de que quieres restaurar los datos por defecto? Esto eliminará todos los bots personalizados.')) {
-        // Limpiar todas las instancias de chat existentes
-        cleanupAllInstances();
-        
-        // Restaurar bots por defecto
-        bots = [...defaultBots];
-        saveBots();
-        renderExperts();
-        renderBotList();
-        updateFloatingChatButton();
-        
-        console.log('Datos por defecto restaurados');
+        try {
+            // Limpiar todas las instancias de chat existentes
+            cleanupAllInstances();
+            
+            // Recargar configuración por defecto desde archivo
+            await loadDefaultBotsFromFile();
+            
+            // Restaurar bots por defecto
+            bots = [...defaultBots];
+            saveBots();
+            renderExperts();
+            renderBotList();
+            updateFloatingChatButton();
+            
+            console.log('Datos por defecto restaurados');
+        } catch (error) {
+            console.error('Error restaurando datos por defecto:', error);
+        }
     }
 }
 
 // Obtener el bot por defecto
 function getDefaultBot() {
+    if (!bots || bots.length === 0) {
+        return null;
+    }
     return bots.find(bot => bot.isDefault) || bots[0];
 }
 
@@ -106,6 +118,11 @@ function updateFloatingChatButton() {
         return;
     }
     
+    // Si no hay bots cargados, no hacer nada
+    if (!bots || bots.length === 0) {
+        return;
+    }
+    
     // Determinar qué mostrar
     let targetBot = null;
     let buttonText = '';
@@ -113,11 +130,15 @@ function updateFloatingChatButton() {
     if (lastMinimizedBotId && chatInstances[lastMinimizedBotId]) {
         // Mostrar la última instancia minimizada
         targetBot = bots.find(b => b.id === lastMinimizedBotId);
-        buttonText = `Abrir ${targetBot.name}`;
+        if (targetBot) {
+            buttonText = `Abrir ${targetBot.name}`;
+        }
     } else {
         // No hay chat activo, mostrar el bot por defecto
         targetBot = getDefaultBot();
-        buttonText = `Abrir ${targetBot.name}`;
+        if (targetBot) {
+            buttonText = `Abrir ${targetBot.name}`;
+        }
     }
     
     if (targetBot) {
@@ -820,10 +841,10 @@ window.closeConfig = closeConfig;
 window.addBot = addBot;
 window.deleteBot = deleteBot;
 window.setDefaultBot = setDefaultBot;
-window.loadDefaultBots = loadDefaultBots;
+window.loadDefaultBots = restoreDefaultBots;
 window.debugChatInstances = debugChatInstances;
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', function() {
-    loadBots();
+document.addEventListener('DOMContentLoaded', async function() {
+    await loadBots();
 });
