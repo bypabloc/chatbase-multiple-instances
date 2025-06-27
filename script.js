@@ -314,6 +314,11 @@ function minimizeChatInstance(botId) {
         return;
     }
     
+    // Remover event listener de click fuera cuando se minimiza
+    if (instance.outsideClickHandler) {
+        document.removeEventListener('click', instance.outsideClickHandler);
+    }
+    
     console.log(`Ocultando container para bot ${botId}`);
     instance.container.style.display = 'none';
     instance.isVisible = false;
@@ -382,6 +387,14 @@ function restoreChatInstance(botId) {
     if (lastMinimizedBotId === botId) {
         lastMinimizedBotId = null;
     }
+    
+    // Reactivar event listener de click fuera cuando se restaura
+    if (instance.outsideClickHandler) {
+        setTimeout(() => {
+            document.addEventListener('click', instance.outsideClickHandler);
+        }, 100);
+    }
+    
     updateFloatingChatButton();
     console.log(`Bot ${botId} restaurado exitosamente`);
 }
@@ -520,12 +533,26 @@ function openChatbaseInstance(chatbotId, botId) {
             chatContainer.appendChild(closeBtn);
             document.body.appendChild(chatContainer);
 
+            // Agregar event listener para click fuera del container
+            const handleOutsideClick = (event) => {
+                if (!chatContainer.contains(event.target)) {
+                    minimizeChatInstance(botId);
+                    document.removeEventListener('click', handleOutsideClick);
+                }
+            };
+            
+            // Agregar el listener después de un pequeño delay para evitar que se active inmediatamente
+            setTimeout(() => {
+                document.addEventListener('click', handleOutsideClick);
+            }, 100);
+
             // Guardar la instancia
             chatInstances[botId] = {
                 container: chatContainer,
                 iframe: iframe,
                 isVisible: true,
-                chatbotId: chatbotId
+                chatbotId: chatbotId,
+                outsideClickHandler: handleOutsideClick
             };
         } else {
             // Método widget (puede tener conflictos)
@@ -581,6 +608,11 @@ function destroyChatInstance(botId) {
     if (!chatInstances[botId]) return;
     
     const instance = chatInstances[botId];
+    
+    // Remover event listener de click fuera si existe
+    if (instance.outsideClickHandler) {
+        document.removeEventListener('click', instance.outsideClickHandler);
+    }
     
     if (instance.container) {
         instance.container.remove();
