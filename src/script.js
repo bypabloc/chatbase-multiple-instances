@@ -1,3 +1,9 @@
+// Importar analytics de Vercel
+import { inject } from '@vercel/analytics';
+
+// Inicializar analytics
+inject();
+
 // Este script usa el modo iframe por defecto para evitar conflictos al cambiar entre bots
 // Puedes cambiar useIframeMode a false si prefieres el widget, pero puede causar errores
 
