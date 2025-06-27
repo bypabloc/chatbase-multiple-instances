@@ -1,10 +1,7 @@
 // Este script usa el modo iframe por defecto para evitar conflictos al cambiar entre bots
 // Puedes cambiar useIframeMode a false si prefieres el widget, pero puede causar errores
 
-// Configuración por defecto de bots
-let defaultBots = [];
-
-// Configuración actual de bots (se carga desde localStorage o usa defaultBots)
+// Configuración actual de bots (se carga desde localStorage)
 let bots = [];
 
 // Variable para rastrear las instancias de Chatbase
@@ -14,41 +11,15 @@ let lastMinimizedBotId = null; // Última instancia minimizada
 let isTransitioning = false;
 let useIframeMode = true; // Usar iframe por defecto para evitar conflictos
 
-// Cargar configuración por defecto desde archivo JSON
-async function loadDefaultBotsFromFile() {
-    try {
-        const response = await fetch('./defaultBots.json');
-        const data = await response.json();
-        defaultBots = data;
-        return data;
-    } catch (error) {
-        console.error('Error cargando defaultBots.json:', error);
-        // Fallback en caso de error
-        defaultBots = [
-            {
-                id: 'sofi',
-                name: 'Sofi',
-                description: 'Necesitas conversar con alguien que te entienda.',
-                chatbaseId: 'GR66sR8t9ryra-9i1K5Ri',
-                avatar: null,
-                isDefault: true
-            }
-        ];
-        return defaultBots;
-    }
-}
 
 // Cargar bots guardados del localStorage
-async function loadBots() {
+function loadBots() {
     try {
-        // Primero cargar la configuración por defecto
-        await loadDefaultBotsFromFile();
-        
         const savedBots = localStorage.getItem('chatbaseBots');
         if (savedBots) {
             bots = JSON.parse(savedBots);
         } else {
-            bots = [...defaultBots];
+            bots = [];
         }
         
         // Solo renderizar después de que bots esté cargado
@@ -56,6 +27,9 @@ async function loadBots() {
         updateFloatingChatButton();
     } catch (error) {
         console.error('Error cargando bots:', error);
+        bots = [];
+        renderExperts();
+        updateFloatingChatButton();
     }
 }
 
@@ -64,28 +38,95 @@ function saveBots() {
     localStorage.setItem('chatbaseBots', JSON.stringify(bots));
 }
 
-// Restaurar datos por defecto
-async function restoreDefaultBots() {
-    if (confirm('¿Estás seguro de que quieres restaurar los datos por defecto? Esto eliminará todos los bots personalizados.')) {
+// Limpiar todos los bots
+function clearAllBots() {
+    if (confirm('¿Estás seguro de que quieres eliminar todos los bots? Esta acción no se puede deshacer.')) {
         try {
             // Limpiar todas las instancias de chat existentes
             cleanupAllInstances();
             
-            // Recargar configuración por defecto desde archivo
-            await loadDefaultBotsFromFile();
-            
-            // Restaurar bots por defecto
-            bots = [...defaultBots];
+            // Limpiar bots
+            bots = [];
             saveBots();
             renderExperts();
             renderBotList();
             updateFloatingChatButton();
             
-            console.log('Datos por defecto restaurados');
+            console.log('Todos los bots eliminados');
         } catch (error) {
-            console.error('Error restaurando datos por defecto:', error);
+            console.error('Error eliminando bots:', error);
         }
     }
+}
+
+// Importar configuración desde archivo JSON
+function importFromFile() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Por favor selecciona un archivo JSON');
+        return;
+    }
+    
+    if (!file.name.toLowerCase().endsWith('.json')) {
+        alert('El archivo debe ser de tipo JSON');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            
+            // Validar que sea un array
+            if (!Array.isArray(importedData)) {
+                alert('El archivo JSON debe contener un array de bots');
+                return;
+            }
+            
+            // Validar estructura de cada bot
+            const isValidData = importedData.every(bot => {
+                return bot && 
+                       typeof bot === 'object' &&
+                       typeof bot.id === 'string' &&
+                       typeof bot.name === 'string' &&
+                       typeof bot.description === 'string' &&
+                       typeof bot.chatbaseId === 'string' &&
+                       (bot.avatar === null || typeof bot.avatar === 'string') &&
+                       typeof bot.isDefault === 'boolean';
+            });
+            
+            if (!isValidData) {
+                alert('El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault');
+                return;
+            }
+            
+            if (confirm(`¿Estás seguro de que quieres importar ${importedData.length} bot(s)? Esto reemplazará la configuración actual.`)) {
+                // Limpiar todas las instancias de chat existentes
+                cleanupAllInstances();
+                
+                // Importar nuevos datos
+                bots = importedData;
+                saveBots();
+                renderExperts();
+                renderBotList();
+                updateFloatingChatButton();
+                
+                // Limpiar el input de archivo
+                fileInput.value = '';
+                
+                alert(`Se importaron ${importedData.length} bot(s) correctamente`);
+                console.log('Datos importados correctamente:', importedData);
+            }
+            
+        } catch (error) {
+            console.error('Error importando archivo:', error);
+            alert('Error al procesar el archivo JSON. Verifica que el formato sea válido.');
+        }
+    };
+    
+    reader.readAsText(file);
 }
 
 // Obtener el bot por defecto
@@ -841,10 +882,11 @@ window.closeConfig = closeConfig;
 window.addBot = addBot;
 window.deleteBot = deleteBot;
 window.setDefaultBot = setDefaultBot;
-window.loadDefaultBots = restoreDefaultBots;
+window.clearAllBots = clearAllBots;
+window.importFromFile = importFromFile;
 window.debugChatInstances = debugChatInstances;
 
 // Inicializar
-document.addEventListener('DOMContentLoaded', async function() {
-    await loadBots();
+document.addEventListener('DOMContentLoaded', function() {
+    loadBots();
 });

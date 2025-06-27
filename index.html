@@ -58,7 +58,12 @@
             
             <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
                 <h3 style="margin-bottom: 15px; font-size: 18px; color: #1e293b;">Opciones avanzadas</h3>
-                <button class="load-default-button" onclick="loadDefaultBots()">Cargar datos por defecto</button>
+                <div style="margin-bottom: 15px;">
+                    <label class="form-label">Importar configuración desde archivo JSON</label>
+                    <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%; font-size: 14px;">
+                    <button class="add-bot-button" onclick="importFromFile()" style="background-color: #059669; margin-right: 10px;">Importar datos</button>
+                </div>
+                <button class="load-default-button" onclick="clearAllBots()" style="background-color: #dc2626;">Eliminar todos los bots</button>
             </div>
         </div>
     </div>
