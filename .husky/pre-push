@@ -6,10 +6,23 @@ echo "
 ╚═══════════════════════════════════════════════════════════╝
 "
 
-# Use correct Node.js version
+# Check Node.js version
 if [ -f .nvmrc ]; then
-    echo "🔄 Switching to Node.js version from .nvmrc..."
-    nvm use
+    REQUIRED_NODE_VERSION=$(cat .nvmrc | tr -d 'v')
+    CURRENT_NODE_VERSION=$(node --version | tr -d 'v')
+    
+    echo "🔄 Node.js version check..."
+    echo "   Required: v$REQUIRED_NODE_VERSION"
+    echo "   Current:  v$CURRENT_NODE_VERSION"
+    
+    if [ "$CURRENT_NODE_VERSION" != "$REQUIRED_NODE_VERSION" ]; then
+        echo ""
+        echo "⚠️  WARNING: Node.js version mismatch!"
+        echo "💡 Please run 'nvm use' before pushing to avoid potential issues"
+        echo "   Continuing with current version..."
+    else
+        echo "✅ Node.js version is correct"
+    fi
     echo ""
 fi
 
