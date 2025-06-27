@@ -33,8 +33,8 @@ let bots = [
     }
 ];
 
-// Variable para rastrear la instancia actual de Chatbase
-let currentChatbaseInstance = null;
+// Variable para rastrear las instancias de Chatbase
+let chatInstances = {}; // Almacena las instancias por botId
 let currentBotId = null;
 let isTransitioning = false;
 let useIframeMode = true; // Usar iframe por defecto para evitar conflictos
@@ -97,57 +97,190 @@ function renderExperts() {
     });
 }
 
-// Abrir Chatbase
+// Abrir/Minimizar/Restaurar Chatbase
 function openChatbase(chatbotId, botId) {
+    console.log(`openChatbase llamado para bot: ${botId}, chatbotId: ${chatbotId}`);
+    
     // Evitar clicks durante la transición
-    if (isTransitioning) return;
+    if (isTransitioning) {
+        console.log('Transición en progreso, ignorando click');
+        return;
+    }
 
-    // Si hay una instancia activa y es diferente, cerrarla
-    if (currentChatbaseInstance && currentBotId !== botId) {
-        isTransitioning = true;
-        closeChatbase();
+    const button = document.getElementById(`btn-${botId}`);
+    console.log('Botón encontrado:', !!button);
+    
+    // Si ya existe una instancia para este bot
+    if (chatInstances[botId]) {
+        const instance = chatInstances[botId];
+        console.log(`Instancia existente encontrada. Visible: ${instance.isVisible}`);
         
-        // Pequeño delay para asegurar limpieza
-        setTimeout(() => {
-            openChatbaseInstance(chatbotId, botId);
-            isTransitioning = false;
-        }, 200);
+        if (instance.isVisible) {
+            // Si está visible, minimizarlo
+            console.log('Minimizando instancia visible');
+            minimizeChatInstance(botId);
+        } else {
+            // Si está minimizado, restaurarlo
+            console.log('Restaurando instancia minimizada');
+            restoreChatInstance(botId);
+        }
         return;
     }
 
-    // Si es el mismo bot, alternar (cerrar/abrir)
-    if (currentBotId === botId) {
-        closeChatbase();
-        return;
+    console.log('No existe instancia, creando nueva');
+    
+    // Si hay otra instancia de un bot diferente, destruirla completamente
+    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId]) {
+        console.log(`Destruyendo instancia anterior: ${currentBotId}`);
+        destroyChatInstance(currentBotId);
     }
 
+    // Crear nueva instancia
+    setButtonLoading(button, true);
     openChatbaseInstance(chatbotId, botId);
+}
+
+// Función para establecer estado de loading en botón
+function setButtonLoading(button, isLoading) {
+    if (isLoading) {
+        button.classList.add('loading');
+        button.disabled = true;
+        button.textContent = 'CARGANDO...';
+    } else {
+        button.classList.remove('loading');
+        button.disabled = false;
+    }
+}
+
+// Función para actualizar estado del botón
+function updateButtonState(botId, state) {
+    console.log(`updateButtonState llamado para bot: ${botId}, estado: ${state}`);
+    
+    const button = document.getElementById(`btn-${botId}`);
+    const bot = bots.find(b => b.id === botId);
+    
+    if (!button || !bot) {
+        console.error(`Botón o bot no encontrado. Botón: ${!!button}, Bot: ${!!bot}`);
+        return;
+    }
+    
+    // Limpiar todas las clases de estado
+    button.classList.remove('active', 'loading', 'minimized');
+    button.disabled = false;
+    
+    switch(state) {
+        case 'active':
+            button.classList.add('active');
+            button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`;
+            console.log(`Botón actualizado a MINIMIZAR para ${bot.name}`);
+            break;
+        case 'minimized':
+            button.classList.add('minimized');
+            button.textContent = `RESTAURAR ${bot.name.toUpperCase()}`;
+            console.log(`Botón actualizado a RESTAURAR para ${bot.name}`);
+            break;
+        case 'loading':
+            button.classList.add('loading');
+            button.textContent = 'CARGANDO...';
+            button.disabled = true;
+            console.log(`Botón actualizado a CARGANDO para ${bot.name}`);
+            break;
+        default:
+            button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`;
+            console.log(`Botón actualizado a HABLAR CON para ${bot.name}`);
+    }
+}
+
+// Función para minimizar instancia
+function minimizeChatInstance(botId) {
+    console.log(`minimizeChatInstance llamado para bot: ${botId}`);
+    
+    if (!chatInstances[botId]) {
+        console.error(`No existe instancia para bot: ${botId}`);
+        return;
+    }
+    
+    const instance = chatInstances[botId];
+    console.log('Instance container:', !!instance.container);
+    
+    // Verificar que el container existe antes de minimizar
+    if (!instance.container || !document.body.contains(instance.container)) {
+        console.error(`Container for bot ${botId} not found in DOM during minimize`);
+        return;
+    }
+    
+    console.log(`Ocultando container para bot ${botId}`);
+    instance.container.style.display = 'none';
+    instance.isVisible = false;
+    
+    updateButtonState(botId, 'minimized');
+    currentBotId = null;
+    console.log(`Bot ${botId} minimizado exitosamente`);
+}
+
+// Función para restaurar instancia
+function restoreChatInstance(botId) {
+    console.log(`restoreChatInstance llamado para bot: ${botId}`);
+    
+    if (!chatInstances[botId]) {
+        console.error(`No existe instancia para bot: ${botId}`);
+        return;
+    }
+    
+    // Si hay otra instancia visible de un bot diferente, destruirla
+    if (currentBotId && currentBotId !== botId && chatInstances[currentBotId]) {
+        console.log(`Destruyendo instancia visible anterior: ${currentBotId}`);
+        destroyChatInstance(currentBotId);
+    }
+    
+    const instance = chatInstances[botId];
+    console.log('Instance antes de restaurar:', {
+        hasContainer: !!instance.container,
+        isVisible: instance.isVisible,
+        containerInDOM: instance.container ? document.body.contains(instance.container) : false,
+        currentDisplay: instance.container ? instance.container.style.display : 'N/A'
+    });
+    
+    // Verificar que el container aún existe en el DOM
+    if (!instance.container || !document.body.contains(instance.container)) {
+        console.error(`Container for bot ${botId} no longer exists in DOM. Recreating...`);
+        // Si el container no existe, destruir la instancia y crear una nueva
+        delete chatInstances[botId];
+        const bot = bots.find(b => b.id === botId);
+        if (bot) {
+            console.log(`Recreando instancia para bot: ${botId}`);
+            openChatbaseInstance(bot.chatbaseId, botId);
+        }
+        return;
+    }
+    
+    // Restaurar la visibilidad del container
+    console.log(`Restaurando bot ${botId}, display antes:`, instance.container.style.display);
+    instance.container.style.display = 'flex';
+    instance.container.style.visibility = 'visible';
+    instance.isVisible = true;
+    
+    // Verificar que efectivamente se aplicó el cambio
+    console.log(`Display después del cambio:`, instance.container.style.display);
+    console.log(`Container visible en pantalla:`, instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0);
+    
+    updateButtonState(botId, 'active');
+    currentBotId = botId;
+    console.log(`Bot ${botId} restaurado exitosamente`);
 }
 
 // Función auxiliar para abrir la instancia de Chatbase
 function openChatbaseInstance(chatbotId, botId) {
     try {
-        // Actualizar el botón activo
-        document.querySelectorAll('.talk-button').forEach(btn => {
-            btn.classList.remove('active');
-            btn.textContent = btn.textContent.replace('CERRAR CHAT CON', 'HABLAR CON');
-        });
-
-        const activeButton = document.getElementById(`btn-${botId}`);
-        if (activeButton) {
-            activeButton.classList.add('active');
-            const botName = bots.find(b => b.id === botId).name.toUpperCase();
-            activeButton.textContent = `CERRAR CHAT CON ${botName}`;
-        }
 
         if (useIframeMode) {
             // Método iframe (más estable)
             const isMobile = window.innerWidth <= 768;
             const chatContainer = document.createElement('div');
-            chatContainer.id = 'chatbase-chat-container';
+            chatContainer.id = `chatbase-chat-container-${botId}`;
             
             const iframeContainer = document.createElement('div');
-            iframeContainer.id = 'chatbase-iframe-container';
+            iframeContainer.id = `chatbase-iframe-container-${botId}`;
             
             if (isMobile) {
                 // Estilo móvil
@@ -231,7 +364,8 @@ function openChatbaseInstance(chatbotId, botId) {
                 closeBtn.style.boxShadow = '0 4px 15px rgba(239, 68, 68, 0.3)';
             });
             
-            closeBtn.onclick = () => closeChatbase();
+            // Botón X solo minimiza, no destruye
+            closeBtn.onclick = () => minimizeChatInstance(botId);
 
             const iframe = document.createElement('iframe');
             iframe.src = `https://www.chatbase.co/chatbot-iframe/${chatbotId}`;
@@ -242,12 +376,31 @@ function openChatbaseInstance(chatbotId, botId) {
             `;
             iframe.allow = "microphone";
 
+            // Manejar cuando el iframe termine de cargar
+            iframe.onload = () => {
+                updateButtonState(botId, 'active');
+                isTransitioning = false;
+            };
+
+            // Manejar errores de carga
+            iframe.onerror = () => {
+                updateButtonState(botId, 'default');
+                isTransitioning = false;
+                console.error('Error al cargar el iframe de Chatbase');
+            };
+
             iframeContainer.appendChild(iframe);
             chatContainer.appendChild(iframeContainer);
             chatContainer.appendChild(closeBtn);
             document.body.appendChild(chatContainer);
 
-            currentChatbaseInstance = chatContainer;
+            // Guardar la instancia
+            chatInstances[botId] = {
+                container: chatContainer,
+                iframe: iframe,
+                isVisible: true,
+                chatbotId: chatbotId
+            };
         } else {
             // Método widget (puede tener conflictos)
             const chatbaseNamespace = `chatbase_${Date.now()}`;
@@ -264,52 +417,86 @@ function openChatbaseInstance(chatbotId, botId) {
             script.setAttribute('chatbotId', chatbotId);
             script.setAttribute('domain', 'www.chatbase.co');
             script.defer = true;
-            script.id = 'chatbase-script-' + Date.now();
+            script.id = `chatbase-script-${botId}`;
+            
+            script.onload = () => {
+                updateButtonState(botId, 'active');
+                isTransitioning = false;
+            };
             
             script.onerror = function() {
                 console.error('Error al cargar Chatbase - cambiando a modo iframe');
                 useIframeMode = true;
-                closeChatbase();
-                setTimeout(() => openChatbaseInstance(chatbotId, botId), 100);
+                updateButtonState(botId, 'default');
+                isTransitioning = false;
             };
             
             document.body.appendChild(script);
-            currentChatbaseInstance = script;
+            
+            // Guardar la instancia (para widget mode)
+            chatInstances[botId] = {
+                script: script,
+                isVisible: true,
+                chatbotId: chatbotId
+            };
         }
 
         currentBotId = botId;
-        isTransitioning = false;
         
     } catch (error) {
         console.error('Error al abrir Chatbase:', error);
+        updateButtonState(botId, 'default');
         isTransitioning = false;
     }
 }
 
-// Cerrar Chatbase
-function closeChatbase() {
-    try {
-        // Remover el contenedor principal del chat si existe
-        const chatContainer = document.getElementById('chatbase-chat-container');
-        if (chatContainer) {
-            chatContainer.remove();
-        }
+// Función para limpiar completamente una instancia
+function destroyChatInstance(botId) {
+    if (!chatInstances[botId]) return;
+    
+    const instance = chatInstances[botId];
+    
+    if (instance.container) {
+        instance.container.remove();
+    }
+    
+    if (instance.script) {
+        instance.script.remove();
+    }
+    
+    if (instance.iframe) {
+        instance.iframe.src = 'about:blank';
+    }
+    
+    // Limpiar elementos específicos del bot si es modo widget
+    if (!useIframeMode) {
+        const widgetSelectors = [
+            `#chatbase-script-${botId}`,
+            `[data-chatbot-id="${instance.chatbotId}"]`
+        ];
         
-        // También remover el contenedor del iframe si existe por separado
-        const iframeContainer = document.getElementById('chatbase-iframe-container');
-        if (iframeContainer) {
-            iframeContainer.remove();
-        }
+        widgetSelectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => el.remove());
+        });
+    }
+    
+    delete chatInstances[botId];
+    updateButtonState(botId, 'default');
+    
+    if (currentBotId === botId) {
+        currentBotId = null;
+    }
+}
 
-        // Remover el script principal si existe
-        if (currentChatbaseInstance && currentChatbaseInstance.tagName === 'SCRIPT') {
-            currentChatbaseInstance.remove();
-        }
+// Función para limpiar todas las instancias (usado al salir de la página)
+function cleanupAllInstances() {
+    try {
+        Object.keys(chatInstances).forEach(botId => {
+            destroyChatInstance(botId);
+        });
 
-        // Limpiar TODOS los elementos de Chatbase
+        // Limpiar elementos huérfanos
         const selectorsToClean = [
-            '#chatbase-chat-container',
-            '#chatbase-iframe-container',
             '[id*="chatbase"]',
             '[id*="cb-"]',
             '[class*="chatbase"]',
@@ -334,27 +521,17 @@ function closeChatbase() {
             if (key.toLowerCase().includes('chatbase') || key.toLowerCase().includes('cb')) {
                 try {
                     delete window[key];
-                } catch (e) {
+                } catch (error) {
                     window[key] = undefined;
                 }
             }
         });
 
-        // Resetear botones
-        document.querySelectorAll('.talk-button').forEach(btn => {
-            btn.classList.remove('active');
-            const botId = btn.id.replace('btn-', '');
-            const bot = bots.find(b => b.id === botId);
-            if (bot) {
-                btn.textContent = `HABLAR CON ${bot.name.toUpperCase()}`;
-            }
-        });
-
-        currentChatbaseInstance = null;
+        chatInstances = {};
         currentBotId = null;
         
     } catch (error) {
-        console.error('Error al cerrar Chatbase:', error);
+        console.error('Error al limpiar instancias:', error);
     }
 }
 
@@ -424,6 +601,13 @@ function addBot() {
 // Eliminar bot
 function deleteBot(index) {
     if (confirm('¿Estás seguro de que quieres eliminar este bot?')) {
+        const botToDelete = bots[index];
+        
+        // Limpiar la instancia de chat si existe
+        if (botToDelete && chatInstances[botToDelete.id]) {
+            destroyChatInstance(botToDelete.id);
+        }
+        
         bots.splice(index, 1);
         saveBots();
         renderExperts();
@@ -441,10 +625,42 @@ window.onclick = function(event) {
 
 // Limpiar Chatbase al salir de la página
 window.addEventListener('beforeunload', function() {
-    if (currentChatbaseInstance) {
-        closeChatbase();
-    }
+    cleanupAllInstances();
 });
+
+// Función de debug para inspeccionar el estado de las instancias
+function debugChatInstances() {
+    console.log('=== Chat Instances Debug ===');
+    console.log('Current Bot ID:', currentBotId);
+    console.log('Use Iframe Mode:', useIframeMode);
+    console.log('Chat Instances:', Object.keys(chatInstances));
+    
+    Object.entries(chatInstances).forEach(([botId, instance]) => {
+        console.log(`\nBot ${botId}:`);
+        console.log('- Is Visible:', instance.isVisible);
+        console.log('- Has Container:', !!instance.container);
+        console.log('- Container in DOM:', instance.container ? document.body.contains(instance.container) : false);
+        console.log('- Container Display:', instance.container ? instance.container.style.display : 'N/A');
+        console.log('- Chatbot ID:', instance.chatbotId);
+    });
+    console.log('=======================');
+}
+
+// Función de debug para verificar el estado de las instancias
+function debugChatInstances() {
+    console.log('=== Estado de Chat Instances ===');
+    console.log('Total instancias:', Object.keys(chatInstances).length);
+    console.log('Bot actual:', currentBotId);
+    
+    Object.keys(chatInstances).forEach(botId => {
+        const instance = chatInstances[botId];
+        console.log(`\nBot: ${botId}`);
+        console.log('- Visible:', instance.isVisible);
+        console.log('- Container existe:', !!instance.container);
+        console.log('- Container en DOM:', instance.container ? document.body.contains(instance.container) : false);
+        console.log('- Display style:', instance.container ? instance.container.style.display : 'N/A');
+    });
+}
 
 // Hacer funciones globales para los onclick
 window.openChatbase = openChatbase;
@@ -452,6 +668,7 @@ window.openConfig = openConfig;
 window.closeConfig = closeConfig;
 window.addBot = addBot;
 window.deleteBot = deleteBot;
+window.debugChatInstances = debugChatInstances;
 
 // Inicializar
 document.addEventListener('DOMContentLoaded', function() {

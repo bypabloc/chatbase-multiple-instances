@@ -194,6 +194,35 @@ h1 {
     background: #059669;
 }
 
+.talk-button.loading {
+    background: #6b7280;
+    cursor: not-allowed;
+    position: relative;
+}
+
+.talk-button.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.talk-button.minimized {
+    background: #f59e0b;
+}
+
 /* Config Button */
 .config-button {
     position: fixed;
