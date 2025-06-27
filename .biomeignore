@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.vite/
+
+# Coverage reports
+coverage/
+
+# Test files (optional - configure in biome.json instead)
+# test/
+
+# Public assets
+public/
+
+# Configuration files
+*.config.js
+vite.config.js
+vitest.config.js
+
+# Package files
+package.json
+package-lock.json
+pnpm-lock.yaml
+
+# Git and editor files
+.git/
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Logs
+*.log
+logs/

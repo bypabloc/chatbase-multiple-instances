@@ -44,10 +44,56 @@
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
     background-color: #f5f5f5;
     padding: 20px;
     min-height: 100vh;
+}
+
+/* GitHub Repository Link */
+.github-link {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #24292e;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.github-link:hover {
+    background: #1b1f23;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    color: white;
+}
+
+.github-link svg {
+    flex-shrink: 0;
+}
+
+/* Responsive adjustments for GitHub link */
+@media (max-width: 768px) {
+    .github-link {
+        top: 10px;
+        left: 10px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .github-link svg {
+        width: 16px;
+        height: 16px;
+    }
 }
 
 .container {
@@ -219,8 +265,12 @@ h1 {
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 .talk-button.minimized {
@@ -270,8 +320,12 @@ h1 {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 .modal-content {

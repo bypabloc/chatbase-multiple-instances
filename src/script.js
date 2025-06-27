@@ -1,6 +1,6 @@
-import { inject } from '@vercel/analytics';
+import { inject } from '@vercel/analytics'
 
-inject();
+inject()
 
 /**
  * Configuration constants for the application
@@ -10,8 +10,8 @@ const CONFIG = {
     MOBILE_BREAKPOINT: 768,
     STORAGE_KEY: 'chatbaseBots',
     TRANSITION_DELAY: 100,
-    CHAT_BASE_URL: 'https://www.chatbase.co'
-};
+    CHAT_BASE_URL: 'https://www.chatbase.co',
+}
 
 /**
  * CSS styles for chat components
@@ -69,36 +69,36 @@ const STYLES = {
         width: 100%;
         height: 100%;
         border: none;
-    `
-};
+    `,
+}
 
 /**
  * Main ChatbaseManager class handles all chat functionality
  */
 class ChatbaseManager {
     constructor() {
-        this.bots = [];
-        this.chatInstances = {};
-        this.currentBotId = null;
-        this.lastMinimizedBotId = null;
-        this.isTransitioning = false;
-        this.init();
+        this.bots = []
+        this.chatInstances = {}
+        this.currentBotId = null
+        this.lastMinimizedBotId = null
+        this.isTransitioning = false
+        this.init()
     }
 
     /**
      * Initialize the manager and load saved bots
      */
     init() {
-        this.loadBots();
-        this.setupEventListeners();
+        this.loadBots()
+        this.setupEventListeners()
     }
 
     /**
      * Setup global event listeners
      */
     setupEventListeners() {
-        window.addEventListener('beforeunload', () => this.cleanupAllInstances());
-        window.onclick = (event) => this.handleModalClick(event);
+        window.addEventListener('beforeunload', () => this.cleanupAllInstances())
+        window.onclick = event => this.handleModalClick(event)
     }
 
     /**
@@ -106,9 +106,9 @@ class ChatbaseManager {
      * @param {Event} event - Click event
      */
     handleModalClick(event) {
-        const modal = document.getElementById('configModal');
+        const modal = document.getElementById('configModal')
         if (event.target === modal) {
-            this.closeConfig();
+            this.closeConfig()
         }
     }
 
@@ -117,15 +117,15 @@ class ChatbaseManager {
      */
     loadBots() {
         try {
-            const savedBots = localStorage.getItem(CONFIG.STORAGE_KEY);
-            this.bots = savedBots ? JSON.parse(savedBots) : [];
-            this.renderExperts();
-            this.updateFloatingChatButton();
+            const savedBots = localStorage.getItem(CONFIG.STORAGE_KEY)
+            this.bots = savedBots ? JSON.parse(savedBots) : []
+            this.renderExperts()
+            this.updateFloatingChatButton()
         } catch (error) {
-            console.error('Error loading bots:', error);
-            this.bots = [];
-            this.renderExperts();
-            this.updateFloatingChatButton();
+            console.error('Error loading bots:', error)
+            this.bots = []
+            this.renderExperts()
+            this.updateFloatingChatButton()
         }
     }
 
@@ -133,7 +133,7 @@ class ChatbaseManager {
      * Save bots to localStorage
      */
     saveBots() {
-        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(this.bots));
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(this.bots))
     }
 
     /**
@@ -141,8 +141,8 @@ class ChatbaseManager {
      * @returns {Object|null} Default bot or first bot if none set as default
      */
     getDefaultBot() {
-        if (!this.bots || this.bots.length === 0) return null;
-        return this.bots.find(bot => bot.isDefault) || this.bots[0];
+        if (!this.bots || this.bots.length === 0) return null
+        return this.bots.find(bot => bot.isDefault) || this.bots[0]
     }
 
     /**
@@ -151,10 +151,10 @@ class ChatbaseManager {
      */
     setDefaultBot(botId) {
         this.bots.forEach(bot => {
-            bot.isDefault = (bot.id === botId);
-        });
-        this.saveBots();
-        this.updateFloatingChatButton();
+            bot.isDefault = bot.id === botId
+        })
+        this.saveBots()
+        this.updateFloatingChatButton()
     }
 
     /**
@@ -163,7 +163,11 @@ class ChatbaseManager {
      * @returns {string} First letters of each word, max 2 chars
      */
     getInitials(name) {
-        return name.split(' ').map(word => word[0]).join('').slice(0, 2);
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .slice(0, 2)
     }
 
     /**
@@ -171,21 +175,21 @@ class ChatbaseManager {
      * @returns {boolean} True if mobile device
      */
     isMobile() {
-        return window.innerWidth <= CONFIG.MOBILE_BREAKPOINT;
+        return window.innerWidth <= CONFIG.MOBILE_BREAKPOINT
     }
 
     /**
      * Render expert cards in the grid
      */
     renderExperts() {
-        const grid = document.getElementById('expertsGrid');
-        grid.innerHTML = '';
+        const grid = document.getElementById('expertsGrid')
+        grid.innerHTML = ''
 
         this.bots.forEach(bot => {
-            const card = this.createExpertCard(bot);
-            grid.appendChild(card);
-            this.loadBotAvatar(bot);
-        });
+            const card = this.createExpertCard(bot)
+            grid.appendChild(card)
+            this.loadBotAvatar(bot)
+        })
     }
 
     /**
@@ -194,9 +198,9 @@ class ChatbaseManager {
      * @returns {HTMLElement} Card element
      */
     createExpertCard(bot) {
-        const card = document.createElement('div');
-        card.className = 'expert-card';
-        
+        const card = document.createElement('div')
+        card.className = 'expert-card'
+
         card.innerHTML = `
             <div class="avatar-container">
                 <div id="avatar-${bot.id}" class="avatar-fallback">${this.getInitials(bot.name)}</div>
@@ -206,9 +210,9 @@ class ChatbaseManager {
             <button class="talk-button" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
                 HABLAR CON ${bot.name.toUpperCase()}
             </button>
-        `;
-        
-        return card;
+        `
+
+        return card
     }
 
     /**
@@ -216,33 +220,33 @@ class ChatbaseManager {
      * @param {Object} bot - Bot configuration
      */
     loadBotAvatar(bot) {
-        if (!bot.avatar) return;
+        if (!bot.avatar) return
 
-        const img = new Image();
+        const img = new Image()
         img.onload = () => {
-            const avatarDiv = document.getElementById(`avatar-${bot.id}`);
+            const avatarDiv = document.getElementById(`avatar-${bot.id}`)
             if (avatarDiv) {
-                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`;
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`
             }
-        };
+        }
         img.onerror = () => {
-            console.log(`Could not load avatar for ${bot.name}`);
-        };
-        img.src = bot.avatar;
+            console.log(`Could not load avatar for ${bot.name}`)
+        }
+        img.src = bot.avatar
     }
 
     /**
      * Update floating chat button visibility and content
      */
     updateFloatingChatButton() {
-        this.removeFloatingButton();
-        
-        if (this.currentBotId || !this.bots || this.bots.length === 0) return;
+        this.removeFloatingButton()
 
-        const targetBot = this.getTargetBotForFloatingButton();
+        if (this.currentBotId || !this.bots || this.bots.length === 0) return
+
+        const targetBot = this.getTargetBotForFloatingButton()
         if (targetBot) {
-            const buttonText = `Abrir ${targetBot.name}`;
-            this.createFloatingChatButton(targetBot, buttonText);
+            const buttonText = `Abrir ${targetBot.name}`
+            this.createFloatingChatButton(targetBot, buttonText)
         }
     }
 
@@ -252,17 +256,17 @@ class ChatbaseManager {
      */
     getTargetBotForFloatingButton() {
         if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
-            return this.bots.find(b => b.id === this.lastMinimizedBotId);
+            return this.bots.find(b => b.id === this.lastMinimizedBotId)
         }
-        return this.getDefaultBot();
+        return this.getDefaultBot()
     }
 
     /**
      * Remove existing floating button
      */
     removeFloatingButton() {
-        const existingButton = document.getElementById('floating-chat-button');
-        if (existingButton) existingButton.remove();
+        const existingButton = document.getElementById('floating-chat-button')
+        if (existingButton) existingButton.remove()
     }
 
     /**
@@ -271,19 +275,19 @@ class ChatbaseManager {
      * @param {string} buttonText - Button title text
      */
     createFloatingChatButton(bot, buttonText) {
-        const floatingButton = document.createElement('button');
-        floatingButton.id = 'floating-chat-button';
-        floatingButton.title = buttonText;
-        floatingButton.className = 'floating-chat-button floating-chat-button-right';
-        
+        const floatingButton = document.createElement('button')
+        floatingButton.id = 'floating-chat-button'
+        floatingButton.title = buttonText
+        floatingButton.className = 'floating-chat-button floating-chat-button-right'
+
         floatingButton.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-        `;
-        
-        floatingButton.onclick = () => this.handleFloatingButtonClick(bot);
-        document.body.appendChild(floatingButton);
+        `
+
+        floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
+        document.body.appendChild(floatingButton)
     }
 
     /**
@@ -292,9 +296,9 @@ class ChatbaseManager {
      */
     handleFloatingButtonClick(bot) {
         if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
-            this.restoreChatInstance(this.lastMinimizedBotId);
+            this.restoreChatInstance(this.lastMinimizedBotId)
         } else {
-            this.openChatbase(bot.chatbaseId, bot.id);
+            this.openChatbase(bot.chatbaseId, bot.id)
         }
     }
 
@@ -304,22 +308,22 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     openChatbase(chatbotId, botId) {
-        console.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`);
-        
+        console.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`)
+
         if (this.isTransitioning) {
-            console.log('Transition in progress, ignoring click');
-            return;
+            console.log('Transition in progress, ignoring click')
+            return
         }
 
-        const button = document.getElementById(`btn-${botId}`);
-        
+        const button = document.getElementById(`btn-${botId}`)
+
         if (this.chatInstances[botId]) {
-            this.handleExistingInstance(botId);
-            return;
+            this.handleExistingInstance(botId)
+            return
         }
 
-        console.log('Creating new instance');
-        this.handleNewInstance(chatbotId, botId, button);
+        console.log('Creating new instance')
+        this.handleNewInstance(chatbotId, botId, button)
     }
 
     /**
@@ -327,15 +331,15 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     handleExistingInstance(botId) {
-        const instance = this.chatInstances[botId];
-        console.log(`Existing instance found. Visible: ${instance.isVisible}`);
-        
+        const instance = this.chatInstances[botId]
+        console.log(`Existing instance found. Visible: ${instance.isVisible}`)
+
         if (instance.isVisible) {
-            console.log('Minimizing visible instance');
-            this.minimizeChatInstance(botId);
+            console.log('Minimizing visible instance')
+            this.minimizeChatInstance(botId)
         } else {
-            console.log('Restoring minimized instance');
-            this.restoreChatInstance(botId);
+            console.log('Restoring minimized instance')
+            this.restoreChatInstance(botId)
         }
     }
 
@@ -346,15 +350,18 @@ class ChatbaseManager {
      * @param {HTMLElement} button - Button element
      */
     handleNewInstance(chatbotId, botId, button) {
-        if (this.currentBotId && this.currentBotId !== botId && 
-            this.chatInstances[this.currentBotId] && 
-            this.chatInstances[this.currentBotId].isVisible) {
-            console.log(`Minimizing previous instance: ${this.currentBotId}`);
-            this.minimizeChatInstance(this.currentBotId);
+        if (
+            this.currentBotId &&
+            this.currentBotId !== botId &&
+            this.chatInstances[this.currentBotId] &&
+            this.chatInstances[this.currentBotId].isVisible
+        ) {
+            console.log(`Minimizing previous instance: ${this.currentBotId}`)
+            this.minimizeChatInstance(this.currentBotId)
         }
 
-        this.setButtonLoading(button, true);
-        this.createChatInstance(chatbotId, botId);
+        this.setButtonLoading(button, true)
+        this.createChatInstance(chatbotId, botId)
     }
 
     /**
@@ -363,15 +370,15 @@ class ChatbaseManager {
      * @param {boolean} isLoading - Loading state
      */
     setButtonLoading(button, isLoading) {
-        if (!button) return;
-        
+        if (!button) return
+
         if (isLoading) {
-            button.classList.add('loading');
-            button.disabled = true;
-            button.textContent = 'CARGANDO...';
+            button.classList.add('loading')
+            button.disabled = true
+            button.textContent = 'CARGANDO...'
         } else {
-            button.classList.remove('loading');
-            button.disabled = false;
+            button.classList.remove('loading')
+            button.disabled = false
         }
     }
 
@@ -381,37 +388,37 @@ class ChatbaseManager {
      * @param {string} state - State: 'active', 'minimized', 'loading', 'default'
      */
     updateButtonState(botId, state) {
-        console.log(`Updating button state for bot: ${botId}, state: ${state}`);
-        
-        const button = document.getElementById(`btn-${botId}`);
-        const bot = this.bots.find(b => b.id === botId);
-        
+        console.log(`Updating button state for bot: ${botId}, state: ${state}`)
+
+        const button = document.getElementById(`btn-${botId}`)
+        const bot = this.bots.find(b => b.id === botId)
+
         if (!button || !bot) {
-            console.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`);
-            return;
+            console.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`)
+            return
         }
-        
-        button.classList.remove('active', 'loading', 'minimized');
-        button.disabled = false;
-        
-        switch(state) {
+
+        button.classList.remove('active', 'loading', 'minimized')
+        button.disabled = false
+
+        switch (state) {
             case 'active':
-                button.classList.add('active');
-                button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`;
-                break;
+                button.classList.add('active')
+                button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
+                break
             case 'minimized':
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`;
-                break;
+                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                break
             case 'loading':
-                button.classList.add('loading');
-                button.textContent = 'CARGANDO...';
-                button.disabled = true;
-                break;
+                button.classList.add('loading')
+                button.textContent = 'CARGANDO...'
+                button.disabled = true
+                break
             default:
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`;
+                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
         }
-        
-        console.log(`Button updated for ${bot.name}`);
+
+        console.log(`Button updated for ${bot.name}`)
     }
 
     /**
@@ -421,20 +428,19 @@ class ChatbaseManager {
      */
     createChatInstance(chatbotId, botId) {
         try {
-            this.removeFloatingButton();
+            this.removeFloatingButton()
 
             if (CONFIG.IFRAME_MODE) {
-                this.createIframeInstance(chatbotId, botId);
+                this.createIframeInstance(chatbotId, botId)
             } else {
-                this.createWidgetInstance(chatbotId, botId);
+                this.createWidgetInstance(chatbotId, botId)
             }
 
-            this.currentBotId = botId;
-            
+            this.currentBotId = botId
         } catch (error) {
-            console.error('Error creating chat instance:', error);
-            this.updateButtonState(botId, 'default');
-            this.isTransitioning = false;
+            console.error('Error creating chat instance:', error)
+            this.updateButtonState(botId, 'default')
+            this.isTransitioning = false
         }
     }
 
@@ -444,23 +450,23 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     createIframeInstance(chatbotId, botId) {
-        const { chatContainer, iframe } = this.buildIframeElements(chatbotId, botId);
-        const outsideClickHandler = this.createOutsideClickHandler(chatContainer, botId);
-        
-        document.body.appendChild(chatContainer);
-        
+        const { chatContainer, iframe } = this.buildIframeElements(chatbotId, botId)
+        const outsideClickHandler = this.createOutsideClickHandler(chatContainer, botId)
+
+        document.body.appendChild(chatContainer)
+
         // Add outside click listener with delay
         setTimeout(() => {
-            document.addEventListener('click', outsideClickHandler);
-        }, CONFIG.TRANSITION_DELAY);
+            document.addEventListener('click', outsideClickHandler)
+        }, CONFIG.TRANSITION_DELAY)
 
         this.chatInstances[botId] = {
             container: chatContainer,
             iframe: iframe,
             isVisible: true,
             chatbotId: chatbotId,
-            outsideClickHandler: outsideClickHandler
-        };
+            outsideClickHandler: outsideClickHandler,
+        }
     }
 
     /**
@@ -470,16 +476,16 @@ class ChatbaseManager {
      * @returns {Object} Object with chatContainer and iframe elements
      */
     buildIframeElements(chatbotId, botId) {
-        const chatContainer = this.createChatContainer(botId);
-        const iframeContainer = this.createIframeContainer(botId);
-        const iframe = this.createIframe(chatbotId, botId);
-        const closeBtn = this.createCloseButton(botId);
+        const chatContainer = this.createChatContainer(botId)
+        const iframeContainer = this.createIframeContainer(botId)
+        const iframe = this.createIframe(chatbotId, botId)
+        const closeBtn = this.createCloseButton(botId)
 
-        iframeContainer.appendChild(iframe);
-        chatContainer.appendChild(iframeContainer);
-        chatContainer.appendChild(closeBtn);
+        iframeContainer.appendChild(iframe)
+        chatContainer.appendChild(iframeContainer)
+        chatContainer.appendChild(closeBtn)
 
-        return { chatContainer, iframe };
+        return { chatContainer, iframe }
     }
 
     /**
@@ -488,12 +494,12 @@ class ChatbaseManager {
      * @returns {HTMLElement} Chat container
      */
     createChatContainer(botId) {
-        const chatContainer = document.createElement('div');
-        chatContainer.id = `chatbase-chat-container-${botId}`;
-        chatContainer.style.cssText = this.isMobile() 
-            ? STYLES.CHAT_CONTAINER_MOBILE 
-            : STYLES.CHAT_CONTAINER_DESKTOP;
-        return chatContainer;
+        const chatContainer = document.createElement('div')
+        chatContainer.id = `chatbase-chat-container-${botId}`
+        chatContainer.style.cssText = this.isMobile()
+            ? STYLES.CHAT_CONTAINER_MOBILE
+            : STYLES.CHAT_CONTAINER_DESKTOP
+        return chatContainer
     }
 
     /**
@@ -502,10 +508,10 @@ class ChatbaseManager {
      * @returns {HTMLElement} Iframe container
      */
     createIframeContainer(botId) {
-        const iframeContainer = document.createElement('div');
-        iframeContainer.id = `chatbase-iframe-container-${botId}`;
-        iframeContainer.style.cssText = STYLES.IFRAME_CONTAINER;
-        return iframeContainer;
+        const iframeContainer = document.createElement('div')
+        iframeContainer.id = `chatbase-iframe-container-${botId}`
+        iframeContainer.style.cssText = STYLES.IFRAME_CONTAINER
+        return iframeContainer
     }
 
     /**
@@ -515,24 +521,24 @@ class ChatbaseManager {
      * @returns {HTMLElement} Iframe element
      */
     createIframe(chatbotId, botId) {
-        const iframe = document.createElement('iframe');
-        iframe.src = `${CONFIG.CHAT_BASE_URL}/chatbot-iframe/${chatbotId}`;
-        iframe.style.cssText = STYLES.IFRAME;
-        iframe.allow = "microphone";
+        const iframe = document.createElement('iframe')
+        iframe.src = `${CONFIG.CHAT_BASE_URL}/chatbot-iframe/${chatbotId}`
+        iframe.style.cssText = STYLES.IFRAME
+        iframe.allow = 'microphone'
 
         iframe.onload = () => {
-            this.updateButtonState(botId, 'active');
-            this.updateFloatingChatButton();
-            this.isTransitioning = false;
-        };
+            this.updateButtonState(botId, 'active')
+            this.updateFloatingChatButton()
+            this.isTransitioning = false
+        }
 
         iframe.onerror = () => {
-            this.updateButtonState(botId, 'default');
-            this.isTransitioning = false;
-            console.error('Error loading Chatbase iframe');
-        };
+            this.updateButtonState(botId, 'default')
+            this.isTransitioning = false
+            console.error('Error loading Chatbase iframe')
+        }
 
-        return iframe;
+        return iframe
     }
 
     /**
@@ -541,16 +547,16 @@ class ChatbaseManager {
      * @returns {HTMLElement} Close button
      */
     createCloseButton(botId) {
-        const closeBtn = document.createElement('button');
+        const closeBtn = document.createElement('button')
         closeBtn.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-        `;
-        closeBtn.style.cssText = STYLES.CLOSE_BUTTON;
-        
-        this.setupCloseButtonEvents(closeBtn, botId);
-        return closeBtn;
+        `
+        closeBtn.style.cssText = STYLES.CLOSE_BUTTON
+
+        this.setupCloseButtonEvents(closeBtn, botId)
+        return closeBtn
     }
 
     /**
@@ -560,18 +566,18 @@ class ChatbaseManager {
      */
     setupCloseButtonEvents(closeBtn, botId) {
         closeBtn.addEventListener('mouseenter', () => {
-            closeBtn.style.background = '#1d4ed8';
-            closeBtn.style.transform = 'scale(1.1)';
-            closeBtn.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)';
-        });
-        
+            closeBtn.style.background = '#1d4ed8'
+            closeBtn.style.transform = 'scale(1.1)'
+            closeBtn.style.boxShadow = '0 6px 20px rgba(37, 99, 235, 0.4)'
+        })
+
         closeBtn.addEventListener('mouseleave', () => {
-            closeBtn.style.background = '#2563eb';
-            closeBtn.style.transform = 'scale(1)';
-            closeBtn.style.boxShadow = '0 4px 15px rgba(37, 99, 235, 0.3)';
-        });
-        
-        closeBtn.onclick = () => this.minimizeChatInstance(botId);
+            closeBtn.style.background = '#2563eb'
+            closeBtn.style.transform = 'scale(1)'
+            closeBtn.style.boxShadow = '0 4px 15px rgba(37, 99, 235, 0.3)'
+        })
+
+        closeBtn.onclick = () => this.minimizeChatInstance(botId)
     }
 
     /**
@@ -581,12 +587,12 @@ class ChatbaseManager {
      * @returns {Function} Outside click handler
      */
     createOutsideClickHandler(chatContainer, botId) {
-        return (event) => {
+        return event => {
             if (!chatContainer.contains(event.target)) {
-                this.minimizeChatInstance(botId);
-                document.removeEventListener('click', this.chatInstances[botId].outsideClickHandler);
+                this.minimizeChatInstance(botId)
+                document.removeEventListener('click', this.chatInstances[botId].outsideClickHandler)
             }
-        };
+        }
     }
 
     /**
@@ -595,41 +601,41 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     createWidgetInstance(chatbotId, botId) {
-        const chatbaseNamespace = `chatbase_${Date.now()}`;
-        
+        const chatbaseNamespace = `chatbase_${Date.now()}`
+
         window[chatbaseNamespace] = {
             chatbotId: chatbotId,
-            domain: "www.chatbase.co"
-        };
-        
-        window.embeddedChatbotConfig = window[chatbaseNamespace];
+            domain: 'www.chatbase.co',
+        }
 
-        const script = document.createElement('script');
-        script.src = `${CONFIG.CHAT_BASE_URL}/embed.min.js?${Date.now()}`;
-        script.setAttribute('chatbotId', chatbotId);
-        script.setAttribute('domain', 'www.chatbase.co');
-        script.defer = true;
-        script.id = `chatbase-script-${botId}`;
-        
+        window.embeddedChatbotConfig = window[chatbaseNamespace]
+
+        const script = document.createElement('script')
+        script.src = `${CONFIG.CHAT_BASE_URL}/embed.min.js?${Date.now()}`
+        script.setAttribute('chatbotId', chatbotId)
+        script.setAttribute('domain', 'www.chatbase.co')
+        script.defer = true
+        script.id = `chatbase-script-${botId}`
+
         script.onload = () => {
-            this.updateButtonState(botId, 'active');
-            this.isTransitioning = false;
-        };
-        
+            this.updateButtonState(botId, 'active')
+            this.isTransitioning = false
+        }
+
         script.onerror = () => {
-            console.error('Error loading Chatbase - switching to iframe mode');
-            CONFIG.IFRAME_MODE = true;
-            this.updateButtonState(botId, 'default');
-            this.isTransitioning = false;
-        };
-        
-        document.body.appendChild(script);
-        
+            console.error('Error loading Chatbase - switching to iframe mode')
+            CONFIG.IFRAME_MODE = true
+            this.updateButtonState(botId, 'default')
+            this.isTransitioning = false
+        }
+
+        document.body.appendChild(script)
+
         this.chatInstances[botId] = {
             script: script,
             isVisible: true,
-            chatbotId: chatbotId
-        };
+            chatbotId: chatbotId,
+        }
     }
 
     /**
@@ -637,18 +643,18 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     minimizeChatInstance(botId) {
-        console.log(`Minimizing chat instance for bot: ${botId}`);
-        
-        const instance = this.chatInstances[botId];
+        console.log(`Minimizing chat instance for bot: ${botId}`)
+
+        const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`);
-            return;
+            console.error(`No instance found for bot: ${botId}`)
+            return
         }
-        
-        if (!this.validateInstanceContainer(instance, botId)) return;
-        
-        this.hideInstance(instance, botId);
-        this.updateInstanceState(botId, false);
+
+        if (!this.validateInstanceContainer(instance, botId)) return
+
+        this.hideInstance(instance, botId)
+        this.updateInstanceState(botId, false)
     }
 
     /**
@@ -659,10 +665,10 @@ class ChatbaseManager {
      */
     validateInstanceContainer(instance, botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} not found in DOM during minimize`);
-            return false;
+            console.error(`Container for bot ${botId} not found in DOM during minimize`)
+            return false
         }
-        return true;
+        return true
     }
 
     /**
@@ -672,12 +678,12 @@ class ChatbaseManager {
      */
     hideInstance(instance, botId) {
         if (instance.outsideClickHandler) {
-            document.removeEventListener('click', instance.outsideClickHandler);
+            document.removeEventListener('click', instance.outsideClickHandler)
         }
-        
-        console.log(`Hiding container for bot ${botId}`);
-        instance.container.style.display = 'none';
-        instance.isVisible = false;
+
+        console.log(`Hiding container for bot ${botId}`)
+        instance.container.style.display = 'none'
+        instance.isVisible = false
     }
 
     /**
@@ -686,17 +692,17 @@ class ChatbaseManager {
      * @param {boolean} isVisible - Visibility state
      */
     updateInstanceState(botId, isVisible) {
-        this.updateButtonState(botId, isVisible ? 'active' : 'minimized');
-        this.currentBotId = isVisible ? botId : null;
-        
+        this.updateButtonState(botId, isVisible ? 'active' : 'minimized')
+        this.currentBotId = isVisible ? botId : null
+
         if (!isVisible) {
-            this.lastMinimizedBotId = botId;
+            this.lastMinimizedBotId = botId
         } else if (this.lastMinimizedBotId === botId) {
-            this.lastMinimizedBotId = null;
+            this.lastMinimizedBotId = null
         }
-        
-        this.updateFloatingChatButton();
-        console.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`);
+
+        this.updateFloatingChatButton()
+        console.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`)
     }
 
     /**
@@ -704,22 +710,22 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     restoreChatInstance(botId) {
-        console.log(`Restoring chat instance for bot: ${botId}`);
-        
-        const instance = this.chatInstances[botId];
+        console.log(`Restoring chat instance for bot: ${botId}`)
+
+        const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`);
-            return;
+            console.error(`No instance found for bot: ${botId}`)
+            return
         }
-        
-        this.removeFloatingButton();
-        this.minimizeOtherInstances(botId);
-        
-        if (!this.validateAndRecreateInstance(instance, botId)) return;
-        
-        this.showInstance(instance, botId);
-        this.updateInstanceState(botId, true);
-        this.reactivateOutsideClickListener(instance);
+
+        this.removeFloatingButton()
+        this.minimizeOtherInstances(botId)
+
+        if (!this.validateAndRecreateInstance(instance, botId)) return
+
+        this.showInstance(instance, botId)
+        this.updateInstanceState(botId, true)
+        this.reactivateOutsideClickListener(instance)
     }
 
     /**
@@ -727,11 +733,14 @@ class ChatbaseManager {
      * @param {string} currentBotId - Current bot ID to exclude
      */
     minimizeOtherInstances(currentBotId) {
-        if (this.currentBotId && this.currentBotId !== currentBotId && 
-            this.chatInstances[this.currentBotId] && 
-            this.chatInstances[this.currentBotId].isVisible) {
-            console.log(`Minimizing previous visible instance: ${this.currentBotId}`);
-            this.minimizeChatInstance(this.currentBotId);
+        if (
+            this.currentBotId &&
+            this.currentBotId !== currentBotId &&
+            this.chatInstances[this.currentBotId] &&
+            this.chatInstances[this.currentBotId].isVisible
+        ) {
+            console.log(`Minimizing previous visible instance: ${this.currentBotId}`)
+            this.minimizeChatInstance(this.currentBotId)
         }
     }
 
@@ -743,16 +752,16 @@ class ChatbaseManager {
      */
     validateAndRecreateInstance(instance, botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} no longer exists in DOM. Recreating...`);
-            delete this.chatInstances[botId];
-            const bot = this.bots.find(b => b.id === botId);
+            console.error(`Container for bot ${botId} no longer exists in DOM. Recreating...`)
+            delete this.chatInstances[botId]
+            const bot = this.bots.find(b => b.id === botId)
             if (bot) {
-                console.log(`Recreating instance for bot: ${botId}`);
-                this.createChatInstance(bot.chatbaseId, botId);
+                console.log(`Recreating instance for bot: ${botId}`)
+                this.createChatInstance(bot.chatbaseId, botId)
             }
-            return false;
+            return false
         }
-        return true;
+        return true
     }
 
     /**
@@ -761,14 +770,16 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     showInstance(instance, botId) {
-        console.log(`Restoring bot ${botId}, display before:`, instance.container.style.display);
-        instance.container.style.display = 'flex';
-        instance.container.style.visibility = 'visible';
-        instance.isVisible = true;
-        
-        console.log(`Display after change:`, instance.container.style.display);
-        console.log(`Container visible on screen:`, 
-            instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0);
+        console.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
+        instance.container.style.display = 'flex'
+        instance.container.style.visibility = 'visible'
+        instance.isVisible = true
+
+        console.log(`Display after change:`, instance.container.style.display)
+        console.log(
+            `Container visible on screen:`,
+            instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0
+        )
     }
 
     /**
@@ -778,8 +789,8 @@ class ChatbaseManager {
     reactivateOutsideClickListener(instance) {
         if (instance.outsideClickHandler) {
             setTimeout(() => {
-                document.addEventListener('click', instance.outsideClickHandler);
-            }, CONFIG.TRANSITION_DELAY);
+                document.addEventListener('click', instance.outsideClickHandler)
+            }, CONFIG.TRANSITION_DELAY)
         }
     }
 
@@ -788,18 +799,18 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     destroyChatInstance(botId) {
-        const instance = this.chatInstances[botId];
-        if (!instance) return;
-        
-        this.removeInstanceEventListeners(instance);
-        this.removeInstanceElements(instance);
-        this.cleanupWidgetElements(instance, botId);
-        
-        delete this.chatInstances[botId];
-        this.updateButtonState(botId, 'default');
-        
+        const instance = this.chatInstances[botId]
+        if (!instance) return
+
+        this.removeInstanceEventListeners(instance)
+        this.removeInstanceElements(instance)
+        this.cleanupWidgetElements(instance, botId)
+
+        delete this.chatInstances[botId]
+        this.updateButtonState(botId, 'default')
+
         if (this.currentBotId === botId) {
-            this.currentBotId = null;
+            this.currentBotId = null
         }
     }
 
@@ -809,7 +820,7 @@ class ChatbaseManager {
      */
     removeInstanceEventListeners(instance) {
         if (instance.outsideClickHandler) {
-            document.removeEventListener('click', instance.outsideClickHandler);
+            document.removeEventListener('click', instance.outsideClickHandler)
         }
     }
 
@@ -819,15 +830,15 @@ class ChatbaseManager {
      */
     removeInstanceElements(instance) {
         if (instance.container) {
-            instance.container.remove();
+            instance.container.remove()
         }
-        
+
         if (instance.script) {
-            instance.script.remove();
+            instance.script.remove()
         }
-        
+
         if (instance.iframe) {
-            instance.iframe.src = 'about:blank';
+            instance.iframe.src = 'about:blank'
         }
     }
 
@@ -840,12 +851,12 @@ class ChatbaseManager {
         if (!CONFIG.IFRAME_MODE) {
             const widgetSelectors = [
                 `#chatbase-script-${botId}`,
-                `[data-chatbot-id="${instance.chatbotId}"]`
-            ];
-            
+                `[data-chatbot-id="${instance.chatbotId}"]`,
+            ]
+
             widgetSelectors.forEach(selector => {
-                document.querySelectorAll(selector).forEach(el => el.remove());
-            });
+                document.querySelectorAll(selector).forEach(el => el.remove())
+            })
         }
     }
 
@@ -855,17 +866,16 @@ class ChatbaseManager {
     cleanupAllInstances() {
         try {
             Object.keys(this.chatInstances).forEach(botId => {
-                this.destroyChatInstance(botId);
-            });
+                this.destroyChatInstance(botId)
+            })
 
-            this.cleanupOrphanedElements();
-            this.cleanupGlobalProperties();
-            
-            this.chatInstances = {};
-            this.currentBotId = null;
-            
+            this.cleanupOrphanedElements()
+            this.cleanupGlobalProperties()
+
+            this.chatInstances = {}
+            this.currentBotId = null
         } catch (error) {
-            console.error('Error cleaning up instances:', error);
+            console.error('Error cleaning up instances:', error)
         }
     }
 
@@ -881,17 +891,17 @@ class ChatbaseManager {
             'iframe[src*="chatbase.co"]',
             'script[src*="chatbase.co"]',
             'div[data-chatbase]',
-            'button[data-chatbase]'
-        ];
+            'button[data-chatbase]',
+        ]
 
         selectorsToClean.forEach(selector => {
             document.querySelectorAll(selector).forEach(el => {
                 if (el.tagName === 'IFRAME') {
-                    el.src = 'about:blank';
+                    el.src = 'about:blank'
                 }
-                el.remove();
-            });
-        });
+                el.remove()
+            })
+        })
     }
 
     /**
@@ -901,33 +911,37 @@ class ChatbaseManager {
         Object.keys(window).forEach(key => {
             if (key.toLowerCase().includes('chatbase') || key.toLowerCase().includes('cb')) {
                 try {
-                    delete window[key];
+                    delete window[key]
                 } catch {
-                    window[key] = undefined;
+                    window[key] = undefined
                 }
             }
-        });
+        })
     }
 
     /**
      * Clear all bots with confirmation
      */
     clearAllBots() {
-        if (!confirm('¿Estás seguro de que quieres eliminar todos los bots? Esta acción no se puede deshacer.')) {
-            return;
+        if (
+            !confirm(
+                '¿Estás seguro de que quieres eliminar todos los bots? Esta acción no se puede deshacer.'
+            )
+        ) {
+            return
         }
-        
+
         try {
-            this.cleanupAllInstances();
-            this.bots = [];
-            this.saveBots();
-            this.renderExperts();
-            this.renderBotList();
-            this.updateFloatingChatButton();
-            
-            console.log('All bots deleted');
+            this.cleanupAllInstances()
+            this.bots = []
+            this.saveBots()
+            this.renderExperts()
+            this.renderBotList()
+            this.updateFloatingChatButton()
+
+            console.log('All bots deleted')
         } catch (error) {
-            console.error('Error deleting bots:', error);
+            console.error('Error deleting bots:', error)
         }
     }
 
@@ -935,14 +949,14 @@ class ChatbaseManager {
      * Import bots from JSON file
      */
     importFromFile() {
-        const fileInput = document.getElementById('importFile');
-        const file = fileInput.files[0];
-        
-        if (!this.validateImportFile(file)) return;
-        
-        const reader = new FileReader();
-        reader.onload = (e) => this.processImportFile(e, fileInput);
-        reader.readAsText(file);
+        const fileInput = document.getElementById('importFile')
+        const file = fileInput.files[0]
+
+        if (!this.validateImportFile(file)) return
+
+        const reader = new FileReader()
+        reader.onload = e => this.processImportFile(e, fileInput)
+        reader.readAsText(file)
     }
 
     /**
@@ -952,16 +966,16 @@ class ChatbaseManager {
      */
     validateImportFile(file) {
         if (!file) {
-            alert('Por favor selecciona un archivo JSON');
-            return false;
+            alert('Por favor selecciona un archivo JSON')
+            return false
         }
-        
+
         if (!file.name.toLowerCase().endsWith('.json')) {
-            alert('El archivo debe ser de tipo JSON');
-            return false;
+            alert('El archivo debe ser de tipo JSON')
+            return false
         }
-        
-        return true;
+
+        return true
     }
 
     /**
@@ -971,17 +985,20 @@ class ChatbaseManager {
      */
     processImportFile(e, fileInput) {
         try {
-            const importedData = JSON.parse(e.target.result);
-            
-            if (!this.validateImportData(importedData)) return;
-            
-            if (confirm(`¿Estás seguro de que quieres importar ${importedData.length} bot(s)? Esto reemplazará la configuración actual.`)) {
-                this.executeImport(importedData, fileInput);
+            const importedData = JSON.parse(e.target.result)
+
+            if (!this.validateImportData(importedData)) return
+
+            if (
+                confirm(
+                    `¿Estás seguro de que quieres importar ${importedData.length} bot(s)? Esto reemplazará la configuración actual.`
+                )
+            ) {
+                this.executeImport(importedData, fileInput)
             }
-            
         } catch (error) {
-            console.error('Error importing file:', error);
-            alert('Error al procesar el archivo JSON. Verifica que el formato sea válido.');
+            console.error('Error importing file:', error)
+            alert('Error al procesar el archivo JSON. Verifica que el formato sea válido.')
         }
     }
 
@@ -992,27 +1009,31 @@ class ChatbaseManager {
      */
     validateImportData(importedData) {
         if (!Array.isArray(importedData)) {
-            alert('El archivo JSON debe contener un array de bots');
-            return false;
+            alert('El archivo JSON debe contener un array de bots')
+            return false
         }
-        
+
         const isValidData = importedData.every(bot => {
-            return bot && 
-                   typeof bot === 'object' &&
-                   typeof bot.id === 'string' &&
-                   typeof bot.name === 'string' &&
-                   typeof bot.description === 'string' &&
-                   typeof bot.chatbaseId === 'string' &&
-                   (bot.avatar === null || typeof bot.avatar === 'string') &&
-                   typeof bot.isDefault === 'boolean';
-        });
-        
+            return (
+                bot &&
+                typeof bot === 'object' &&
+                typeof bot.id === 'string' &&
+                typeof bot.name === 'string' &&
+                typeof bot.description === 'string' &&
+                typeof bot.chatbaseId === 'string' &&
+                (bot.avatar === null || typeof bot.avatar === 'string') &&
+                typeof bot.isDefault === 'boolean'
+            )
+        })
+
         if (!isValidData) {
-            alert('El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault');
-            return false;
+            alert(
+                'El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault'
+            )
+            return false
         }
-        
-        return true;
+
+        return true
     }
 
     /**
@@ -1021,46 +1042,47 @@ class ChatbaseManager {
      * @param {HTMLElement} fileInput - File input to clear
      */
     executeImport(importedData, fileInput) {
-        this.cleanupAllInstances();
-        
-        this.bots = importedData;
-        this.saveBots();
-        this.renderExperts();
-        this.renderBotList();
-        this.updateFloatingChatButton();
-        
-        fileInput.value = '';
-        
-        alert(`Se importaron ${importedData.length} bot(s) correctamente`);
-        console.log('Data imported successfully:', importedData);
+        this.cleanupAllInstances()
+
+        this.bots = importedData
+        this.saveBots()
+        this.renderExperts()
+        this.renderBotList()
+        this.updateFloatingChatButton()
+
+        fileInput.value = ''
+
+        alert(`Se importaron ${importedData.length} bot(s) correctamente`)
+        console.log('Data imported successfully:', importedData)
     }
 
     /**
      * Open configuration modal
      */
     openConfig() {
-        document.getElementById('configModal').classList.add('active');
-        this.renderBotList();
+        document.getElementById('configModal').classList.add('active')
+        this.renderBotList()
     }
 
     /**
      * Close configuration modal
      */
     closeConfig() {
-        document.getElementById('configModal').classList.remove('active');
+        document.getElementById('configModal').classList.remove('active')
     }
 
     /**
      * Render bot list in configuration modal
      */
     renderBotList() {
-        const botList = document.getElementById('botList');
-        botList.innerHTML = '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>';
+        const botList = document.getElementById('botList')
+        botList.innerHTML =
+            '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>'
 
         this.bots.forEach((bot, index) => {
-            const botItem = this.createBotListItem(bot, index);
-            botList.appendChild(botItem);
-        });
+            const botItem = this.createBotListItem(bot, index)
+            botList.appendChild(botItem)
+        })
     }
 
     /**
@@ -1070,8 +1092,8 @@ class ChatbaseManager {
      * @returns {HTMLElement} Bot list item
      */
     createBotListItem(bot, index) {
-        const botItem = document.createElement('div');
-        botItem.className = 'bot-item';
+        const botItem = document.createElement('div')
+        botItem.className = 'bot-item'
         botItem.innerHTML = `
             <div class="bot-info">
                 <div class="bot-name">${bot.name}</div>
@@ -1086,25 +1108,25 @@ class ChatbaseManager {
                 </label>
                 <button class="delete-bot" onclick="chatManager.deleteBot(${index})">Eliminar</button>
             </div>
-        `;
-        return botItem;
+        `
+        return botItem
     }
 
     /**
      * Add new bot from form
      */
     addBot() {
-        const formData = this.getFormData();
-        
-        if (!this.validateBotForm(formData)) return;
-        
-        const newBot = this.createBotFromForm(formData);
-        
-        this.bots.push(newBot);
-        this.saveBots();
-        this.renderExperts();
-        this.renderBotList();
-        this.clearBotForm();
+        const formData = this.getFormData()
+
+        if (!this.validateBotForm(formData)) return
+
+        const newBot = this.createBotFromForm(formData)
+
+        this.bots.push(newBot)
+        this.saveBots()
+        this.renderExperts()
+        this.renderBotList()
+        this.clearBotForm()
     }
 
     /**
@@ -1116,8 +1138,8 @@ class ChatbaseManager {
             name: document.getElementById('botName').value.trim(),
             description: document.getElementById('botDescription').value.trim(),
             avatar: document.getElementById('botAvatar').value.trim(),
-            chatbaseId: document.getElementById('botId').value.trim()
-        };
+            chatbaseId: document.getElementById('botId').value.trim(),
+        }
     }
 
     /**
@@ -1127,10 +1149,10 @@ class ChatbaseManager {
      */
     validateBotForm(formData) {
         if (!formData.name || !formData.description || !formData.chatbaseId) {
-            alert('Por favor, completa todos los campos obligatorios');
-            return false;
+            alert('Por favor, completa todos los campos obligatorios')
+            return false
         }
-        return true;
+        return true
     }
 
     /**
@@ -1145,18 +1167,18 @@ class ChatbaseManager {
             description: formData.description,
             chatbaseId: formData.chatbaseId,
             avatar: formData.avatar || null,
-            isDefault: false
-        };
+            isDefault: false,
+        }
     }
 
     /**
      * Clear bot form inputs
      */
     clearBotForm() {
-        document.getElementById('botName').value = '';
-        document.getElementById('botDescription').value = '';
-        document.getElementById('botAvatar').value = '';
-        document.getElementById('botId').value = '';
+        document.getElementById('botName').value = ''
+        document.getElementById('botDescription').value = ''
+        document.getElementById('botAvatar').value = ''
+        document.getElementById('botId').value = ''
     }
 
     /**
@@ -1164,57 +1186,63 @@ class ChatbaseManager {
      * @param {number} index - Bot index to delete
      */
     deleteBot(index) {
-        if (!confirm('¿Estás seguro de que quieres eliminar este bot?')) return;
-        
-        const botToDelete = this.bots[index];
-        
+        if (!confirm('¿Estás seguro de que quieres eliminar este bot?')) return
+
+        const botToDelete = this.bots[index]
+
         if (botToDelete && this.chatInstances[botToDelete.id]) {
-            this.destroyChatInstance(botToDelete.id);
+            this.destroyChatInstance(botToDelete.id)
         }
-        
-        this.bots.splice(index, 1);
-        this.saveBots();
-        this.renderExperts();
-        this.renderBotList();
+
+        this.bots.splice(index, 1)
+        this.saveBots()
+        this.renderExperts()
+        this.renderBotList()
     }
 
     /**
      * Debug function to inspect chat instances state
      */
     debugChatInstances() {
-        console.log('=== Chat Instances Debug ===');
-        console.log('Current Bot ID:', this.currentBotId);
-        console.log('Use Iframe Mode:', CONFIG.IFRAME_MODE);
-        console.log('Chat Instances:', Object.keys(this.chatInstances));
-        
+        console.log('=== Chat Instances Debug ===')
+        console.log('Current Bot ID:', this.currentBotId)
+        console.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
+        console.log('Chat Instances:', Object.keys(this.chatInstances))
+
         Object.entries(this.chatInstances).forEach(([botId, instance]) => {
-            console.log(`\nBot ${botId}:`);
-            console.log('- Is Visible:', instance.isVisible);
-            console.log('- Has Container:', !!instance.container);
-            console.log('- Container in DOM:', instance.container ? document.body.contains(instance.container) : false);
-            console.log('- Container Display:', instance.container ? instance.container.style.display : 'N/A');
-            console.log('- Chatbot ID:', instance.chatbotId);
-        });
-        console.log('=======================');
+            console.log(`\nBot ${botId}:`)
+            console.log('- Is Visible:', instance.isVisible)
+            console.log('- Has Container:', !!instance.container)
+            console.log(
+                '- Container in DOM:',
+                instance.container ? document.body.contains(instance.container) : false
+            )
+            console.log(
+                '- Container Display:',
+                instance.container ? instance.container.style.display : 'N/A'
+            )
+            console.log('- Chatbot ID:', instance.chatbotId)
+        })
+        console.log('=======================')
     }
 }
 
 // Initialize the application
-const chatManager = new ChatbaseManager();
+const chatManager = new ChatbaseManager()
 
 // Global functions for HTML onclick handlers
-window.chatManager = chatManager;
-window.openChatbase = (chatbotId, botId) => chatManager.openChatbase(chatbotId, botId);
-window.openConfig = () => chatManager.openConfig();
-window.closeConfig = () => chatManager.closeConfig();
-window.addBot = () => chatManager.addBot();
-window.deleteBot = (index) => chatManager.deleteBot(index);
-window.setDefaultBot = (botId) => chatManager.setDefaultBot(botId);
-window.clearAllBots = () => chatManager.clearAllBots();
-window.importFromFile = () => chatManager.importFromFile();
-window.debugChatInstances = () => chatManager.debugChatInstances();
+window.chatManager = chatManager
+window.openChatbase = (chatbotId, botId) => chatManager.openChatbase(chatbotId, botId)
+window.openConfig = () => chatManager.openConfig()
+window.closeConfig = () => chatManager.closeConfig()
+window.addBot = () => chatManager.addBot()
+window.deleteBot = index => chatManager.deleteBot(index)
+window.setDefaultBot = botId => chatManager.setDefaultBot(botId)
+window.clearAllBots = () => chatManager.clearAllBots()
+window.importFromFile = () => chatManager.importFromFile()
+window.debugChatInstances = () => chatManager.debugChatInstances()
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Chatbase Manager initialized');
-});
+    console.log('Chatbase Manager initialized')
+})
