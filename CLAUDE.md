@@ -113,3 +113,31 @@ The project has **automatic Git hooks** configured:
 To skip hooks in emergencies:
 - Skip pre-commit: `git commit -m "message" --no-verify`
 - Skip pre-push: `git push --no-verify`
+
+### CI/CD with GitHub Actions
+
+The project includes automated CI/CD pipelines:
+
+#### Pull Request Verification (`verify-pr.yml`)
+Runs automatically on:
+- Pull requests to `dev` branch
+- Pushes to any branch except `dev`, `main`, `master`
+
+Verifications:
+1. Code quality with Biome CI
+2. Test suite with ≥90% coverage
+3. Production build
+4. No uncommitted changes
+
+#### Local Testing with Act
+Test GitHub Actions locally:
+```bash
+# Install act
+curl -L https://github.com/nektos/act/releases/latest/download/act_Linux_x86_64.tar.gz | tar xz
+sudo mv act /usr/local/bin/
+
+# Test workflow
+act push -W .github/workflows/verify-pr.yml
+```
+
+See `.github/workflows/act.md` for detailed instructions.

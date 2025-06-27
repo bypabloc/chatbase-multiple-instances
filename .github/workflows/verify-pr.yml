@@ -1,0 +1,144 @@
+name: Verificar Pull Request a Dev
+
+on:
+  pull_request:
+    branches:
+      - 'dev'
+  push:
+    branches-ignore:
+      - 'dev'
+      - 'main'
+      - 'master'
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Configurar Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Configurar PNPM
+      uses: pnpm/action-setup@v4
+      with:
+        version: 10.12.4
+        run_install: false
+
+    - name: Obtener directorio de store de PNPM
+      shell: bash
+      run: |
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+    - name: Configurar caché de PNPM
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
+
+    - name: Instalar dependencias
+      run: |
+        echo "📦 Instalando dependencias con PNPM..."
+        pnpm install
+        echo "✅ Dependencias instaladas correctamente"
+
+    - name: Ejecutar verificación de código con Biome
+      run: |
+        echo "🔍 Ejecutando verificación de código con Biome..."
+        if ! pnpm ci:check; then
+          echo "❌ Error: La verificación de código con Biome ha fallado"
+          echo "💡 Ejecuta 'pnpm check' localmente para corregir los errores"
+          exit 1
+        fi
+        echo "✅ Verificación de código completada"
+
+    - name: Ejecutar pruebas con cobertura
+      run: |
+        echo "🧪 Ejecutando pruebas con cobertura..."
+        if ! pnpm test:coverage; then
+          echo "❌ Error: Las pruebas han fallado o la cobertura está por debajo del umbral"
+          echo "📊 Umbrales requeridos:"
+          echo "   • Lines: 90%"
+          echo "   • Functions: 75%"
+          echo "   • Branches: 88%"
+          echo "   • Statements: 90%"
+          echo "💡 Ejecuta 'pnpm test:coverage' localmente para ver los detalles"
+          exit 1
+        fi
+        echo "✅ Pruebas y cobertura completadas"
+
+    - name: Generar build de producción
+      run: |
+        echo "🏗️ Generando build de producción..."
+        if ! pnpm build; then
+          echo "❌ Error: La generación del build ha fallado"
+          exit 1
+        fi
+        echo "✅ Build generado correctamente"
+
+    - name: Verificar que no hay archivos sin commitear
+      run: |
+        echo "📝 Verificando cambios no commiteados..."
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "❌ Error: Hay archivos modificados después del build"
+          echo "💡 Por favor, ejecuta el build localmente y commitea los cambios"
+          git status --porcelain
+          exit 1
+        fi
+        echo "✅ No hay cambios sin commitear"
+    
+    - name: Notificar resultado exitoso
+      if: success()
+      run: |
+        echo "🎉 VERIFICACIÓN EXITOSA 🎉"
+        echo "✅ Todas las verificaciones han pasado correctamente."
+        echo "✅ El código cumple con los estándares de calidad requeridos."
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "👍 El Pull Request puede ser aprobado y mergeado a dev."
+        else
+          echo "👍 El código está listo para crear un Pull Request a dev."
+        fi
+        
+    - name: Resumen de verificación para PR
+      if: success()
+      run: |
+        echo "### ✅ Verificación exitosa" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Todas las verificaciones pasaron correctamente:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✓ Instalación de dependencias" >> $GITHUB_STEP_SUMMARY
+        echo "- ✓ Verificación de código con Biome" >> $GITHUB_STEP_SUMMARY
+        echo "- ✓ Tests con cobertura (≥90%)" >> $GITHUB_STEP_SUMMARY
+        echo "- ✓ Build de producción" >> $GITHUB_STEP_SUMMARY
+        echo "- ✓ Sin cambios no commiteados" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          echo "El PR #${{ github.event.pull_request.number }} está listo para ser mergeado a la rama dev." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "El código en la rama ${{ github.ref_name }} está listo para crear un PR." >> $GITHUB_STEP_SUMMARY
+        fi
+        
+    - name: Comentar en el PR (Solo en pull requests)
+      if: github.event_name == 'pull_request' && success()
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: '✅ **Todas las verificaciones pasaron exitosamente**\n\n' +
+                  '- ✓ Código formateado con Biome\n' +
+                  '- ✓ Sin errores de linting\n' +
+                  '- ✓ Tests pasando con cobertura ≥90%\n' +
+                  '- ✓ Build de producción exitoso\n\n' +
+                  '¡Este PR está listo para ser revisado y mergeado! 🚀'
+          })
