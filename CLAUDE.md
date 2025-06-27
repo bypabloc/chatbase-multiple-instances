@@ -95,11 +95,21 @@ Key configuration settings:
 
 Always run `pnpm check` before committing to ensure code quality.
 
-### Pre-commit Hooks
+### Git Hooks
 
-The project has **automatic pre-commit hooks** configured that will:
-1. Format your code with Biome
-2. Check for linting errors
-3. Block commits with errors
+The project has **automatic Git hooks** configured:
 
-To skip pre-commit in emergencies: `git commit -m "message" --no-verify`
+#### Pre-commit
+1. Formats your code with Biome
+2. Checks for linting errors
+3. Blocks commits with errors
+
+#### Pre-push
+1. Verifies code quality with `biome ci`
+2. Runs all tests with coverage
+3. Validates coverage thresholds (≥90% statements/lines)
+4. Blocks push if tests fail or coverage is low
+
+To skip hooks in emergencies:
+- Skip pre-commit: `git commit -m "message" --no-verify`
+- Skip pre-push: `git push --no-verify`

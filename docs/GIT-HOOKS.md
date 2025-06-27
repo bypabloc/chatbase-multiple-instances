@@ -1,6 +1,6 @@
-# Pre-commit Hooks Configuration
+# Git Hooks Configuration
 
-Este proyecto utiliza **pre-commit hooks** para asegurar la calidad del código antes de cada commit.
+Este proyecto utiliza **Git hooks** para asegurar la calidad del código antes de cada commit y push.
 
 ## 🛠️ Herramientas Utilizadas
 
@@ -8,13 +8,28 @@ Este proyecto utiliza **pre-commit hooks** para asegurar la calidad del código 
 - **lint-staged**: Ejecuta linters solo en archivos staged
 - **Biome.js**: Linter y formatter rápido y moderno
 
-## 📋 ¿Qué hace el pre-commit?
+## 📋 Hooks Configurados
+
+### 🔸 Pre-commit
 
 Antes de cada commit, automáticamente:
 
 1. **Formatea** el código con Biome
 2. **Verifica** errores de linting
 3. **Bloquea** el commit si hay errores
+
+### 🔸 Pre-push
+
+Antes de cada push, automáticamente:
+
+1. **Verifica** la calidad del código con `biome ci`
+2. **Ejecuta** todos los tests
+3. **Valida** la cobertura de código:
+   - Lines: ≥90%
+   - Functions: ≥75%
+   - Branches: ≥88%
+   - Statements: ≥90%
+4. **Bloquea** el push si algo falla
 
 ## 🚀 Configuración
 
@@ -27,12 +42,16 @@ Antes de cada commit, automáticamente:
 - `*.{json,css,md,html}`: Otros archivos
   - Solo se aplica formato automático
 
-### Saltar el Pre-commit (Emergencias)
+### Saltar los Hooks (Emergencias)
 
-Si necesitas hacer commit sin ejecutar los hooks:
+Si necesitas hacer commit o push sin ejecutar los hooks:
 
 ```bash
+# Saltar pre-commit
 git commit -m "mensaje" --no-verify
+
+# Saltar pre-push
+git push --no-verify
 ```
 
 ⚠️ **Usa con precaución**: Solo en casos de emergencia.
@@ -51,6 +70,12 @@ pnpm lint
 
 # Linting con correcciones
 pnpm lint:fix
+
+# Ejecutar verificaciones pre-push manualmente
+pnpm prepush
+
+# Ver cobertura de tests
+pnpm test:coverage
 ```
 
 ## 📝 Ejemplo de Uso
