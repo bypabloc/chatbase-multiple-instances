@@ -22,14 +22,15 @@ Antes de cada commit, automáticamente:
 
 Antes de cada push, automáticamente:
 
-1. **Verifica** la calidad del código con `biome ci`
-2. **Ejecuta** todos los tests
-3. **Valida** la cobertura de código:
+1. **Verifica** la versión de Node.js (debe ser v22.14.0)
+2. **Verifica** la calidad del código con `biome ci`
+3. **Ejecuta** todos los tests
+4. **Valida** la cobertura de código:
    - Lines: ≥90%
    - Functions: ≥75%
    - Branches: ≥88%
    - Statements: ≥90%
-4. **Bloquea** el push si algo falla
+5. **Bloquea** el push si algo falla
 
 ## 🚀 Configuración
 
