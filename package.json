@@ -8,9 +8,9 @@
     "preview": "vite preview"
   },
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=10"
+    "node": ">=22"
   },
+  "packageManager": "pnpm@10.11.0",
   "pnpm": {},
   "resolutions": {},
   "devDependencies": {

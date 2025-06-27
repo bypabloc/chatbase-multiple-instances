@@ -1,6 +1,8 @@
 {
-  "installCommand": "npm install -g pnpm@latest && pnpm install",
-  "buildCommand": "pnpm build",
+  "framework": "vite",
+  "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
-  "framework": null
+  "installCommand": "corepack enable && corepack prepare pnpm@10.11.0 --activate && pnpm install",
+  "devCommand": "pnpm run dev",
+  "nodeVersion": "22.x"
 }
