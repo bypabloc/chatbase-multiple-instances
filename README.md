@@ -115,10 +115,10 @@ Los estilos se encuentran en `styles.css` y están organizados en secciones:
 ## 🧪 Comandos de Desarrollo
 
 ```bash
-# Servidor de desarrollo con recarga automática
+# Servidor de desarrollo con recarga automática (Vite)
 pnpm run dev
 
-# Compilar para producción (minifica JS, CSS y HTML)
+# Compilar para producción (optimizado con Vite)
 pnpm run build
 
 # Previsualizar build de producción
@@ -129,15 +129,15 @@ pnpm run preview
 
 Para desplegar en producción:
 
-1. **Construye la aplicación**:
+1. **Construye la aplicación con Vite**:
    ```bash
    pnpm run build
    ```
 
-2. **Los archivos minificados** se generan en el directorio `dist/`:
-   - `index.html` - HTML minificado con referencias actualizadas
-   - `script.min.js` - JavaScript minificado y optimizado
-   - `styles.min.css` - CSS minificado y optimizado
+2. **Los archivos optimizados** se generan en el directorio `dist/`:
+   - `index.html` - HTML optimizado con referencias de hashes
+   - `assets/[name].[hash].js` - JavaScript optimizado y tree-shaken
+   - `assets/[name].[hash].css` - CSS optimizado y minificado
 
 3. **Sube el contenido del directorio `dist/`** a tu servidor web
 
@@ -145,12 +145,15 @@ Para desplegar en producción:
 
 5. **Asegúrate** de que tu servidor soporte HTTPS para la integración con Chatbase
 
-### Estadísticas de Optimización
+### Optimizaciones de Vite
 
-El proceso de build reduce significativamente el tamaño de los archivos:
-- **JavaScript**: Reduce ~40-60% del tamaño original
-- **CSS**: Reduce ~30-50% del tamaño original  
-- **HTML**: Reduce ~20-30% del tamaño original
+Vite proporciona optimizaciones avanzadas:
+- **Tree Shaking**: Elimina código no utilizado automáticamente
+- **Code Splitting**: División inteligente de código para carga óptima
+- **Asset Hashing**: Versionado automático para cache busting
+- **Minificación Terser**: Compresión avanzada con eliminación de console.logs
+- **CSS Optimization**: Minificación y optimización de CSS automática
+- **ES Modules**: Soporte nativo para módulos modernos
 
 ## 🤝 Contribución
 

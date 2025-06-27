@@ -8,8 +8,9 @@ This is a client-side web application that provides a chatbot interface for mult
 
 ## Development Commands
 
-- `pnpm run dev` - Start development server with live reload on port 3000
-- `pnpm run run-server` - Start HTTP server on port 3000 (alternative)
+- `pnpm run dev` - Start Vite development server with HMR on port 3000
+- `pnpm run build` - Build for production using Vite with optimizations
+- `pnpm run preview` - Preview production build locally
 
 ## Architecture
 
@@ -54,5 +55,6 @@ Each bot object contains:
 
 - **Node.js**: Version >=22 (specified in .nvmrc)
 - **Package Manager**: pnpm (version >=10)
+- **Build Tool**: Vite 7.0+ with advanced optimizations
 - **No Testing Framework**: Currently no tests configured
-- **No Build Process**: Direct file serving, no compilation step required
+- **Production Build**: Creates optimized assets in `dist/` directory with tree-shaking, minification, and asset hashing

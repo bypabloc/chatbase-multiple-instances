@@ -3,21 +3,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "live-server . --port=3000 --open --wait=200",
-    "build": "node build.js",
-    "preview": "http-server dist/ -p 3000 -o -s",
-    "run-server": "http-server ./ -p 3000 -o -s"
-  },
-  "devDependencies": {
-    "clean-css-cli": "^5.6.3",
-    "html-minifier-terser": "^7.2.0",
-    "live-server": "^1.2.2",
-    "terser": "^5.43.1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
   },
   "pnpm": {},
-  "resolutions": {}
+  "resolutions": {},
+  "devDependencies": {
+    "terser": "^5.43.1",
+    "vite": "^7.0.0"
+  }
 }
