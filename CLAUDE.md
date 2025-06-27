@@ -94,3 +94,12 @@ Key configuration settings:
 - **Trailing commas**: ES5 compatible
 
 Always run `pnpm check` before committing to ensure code quality.
+
+### Pre-commit Hooks
+
+The project has **automatic pre-commit hooks** configured that will:
+1. Format your code with Biome
+2. Check for linting errors
+3. Block commits with errors
+
+To skip pre-commit in emergencies: `git commit -m "message" --no-verify`

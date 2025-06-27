@@ -47,3 +47,5 @@ junit.xml
 # Temporary files
 tmp/
 temp/
+test-precommit*.js
+.git/lint-staged_*.patch
