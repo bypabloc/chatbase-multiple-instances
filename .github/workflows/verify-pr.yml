@@ -10,6 +10,11 @@ on:
       - 'main'
       - 'master'
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -128,17 +133,24 @@ jobs:
     - name: Comentar en el PR (Solo en pull requests)
       if: github.event_name == 'pull_request' && success()
       uses: actions/github-script@v7
+      continue-on-error: true
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         script: |
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: '✅ **Todas las verificaciones pasaron exitosamente**\n\n' +
-                  '- ✓ Código formateado con Biome\n' +
-                  '- ✓ Sin errores de linting\n' +
-                  '- ✓ Tests pasando con cobertura ≥90%\n' +
-                  '- ✓ Build de producción exitoso\n\n' +
-                  '¡Este PR está listo para ser revisado y mergeado! 🚀'
-          })
+          try {
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **Todas las verificaciones pasaron exitosamente**\n\n' +
+                    '- ✓ Código formateado con Biome\n' +
+                    '- ✓ Sin errores de linting\n' +
+                    '- ✓ Tests pasando con cobertura ≥90%\n' +
+                    '- ✓ Build de producción exitoso\n\n' +
+                    '¡Este PR está listo para ser revisado y mergeado! 🚀'
+            });
+            console.log('✅ Comentario añadido exitosamente al PR');
+          } catch (error) {
+            console.log('⚠️ No se pudo añadir comentario al PR (permisos insuficientes)');
+            console.log('ℹ️ Las verificaciones pasaron correctamente, pero el bot no puede comentar');
+          }
