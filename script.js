@@ -331,7 +331,11 @@ function openChatbaseInstance(chatbotId, botId) {
 
             // Botón bubble debajo del chat - alineado a la derecha
             const closeBtn = document.createElement('button');
-            closeBtn.innerHTML = '×';
+            closeBtn.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
             closeBtn.style.cssText = `
                 margin-top: 10px;
                 background: #ef4444;
@@ -341,14 +345,13 @@ function openChatbaseInstance(chatbotId, botId) {
                 height: 45px;
                 border-radius: 50%;
                 cursor: pointer;
-                font-size: 24px;
-                font-weight: bold;
                 box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 transition: all 0.3s ease;
                 z-index: 10;
+                padding: 0;
             `;
             
             // Hover effect
@@ -521,7 +524,7 @@ function cleanupAllInstances() {
             if (key.toLowerCase().includes('chatbase') || key.toLowerCase().includes('cb')) {
                 try {
                     delete window[key];
-                } catch (error) {
+                } catch {
                     window[key] = undefined;
                 }
             }
