@@ -101,6 +101,11 @@ function updateFloatingChatButton() {
         existingButton.remove();
     }
     
+    // Si hay una instancia activa/visible, no mostrar el botón
+    if (currentBotId) {
+        return;
+    }
+    
     // Determinar qué mostrar
     let targetBot = null;
     let buttonText = '';
@@ -109,7 +114,7 @@ function updateFloatingChatButton() {
         // Mostrar la última instancia minimizada
         targetBot = bots.find(b => b.id === lastMinimizedBotId);
         buttonText = `Abrir ${targetBot.name}`;
-    } else if (!currentBotId) {
+    } else {
         // No hay chat activo, mostrar el bot por defecto
         targetBot = getDefaultBot();
         buttonText = `Abrir ${targetBot.name}`;
@@ -117,6 +122,14 @@ function updateFloatingChatButton() {
     
     if (targetBot) {
         createFloatingChatButton(targetBot, buttonText);
+    }
+}
+
+// Deshabilitar/habilitar el floating button
+function setFloatingButtonEnabled(enabled) {
+    const floatingButton = document.getElementById('floating-chat-button');
+    if (floatingButton) {
+        floatingButton.disabled = !enabled;
     }
 }
 
@@ -133,15 +146,23 @@ function createFloatingChatButton(bot, buttonText) {
         </svg>
     `;
     
-    floatingButton.className = 'floating-chat-button';
+    // El botón siempre aparece a la derecha
+    floatingButton.className = 'floating-chat-button floating-chat-button-right';
     
     // Click handler
     floatingButton.onclick = () => {
+        if (floatingButton.disabled) return; // No hacer nada si está deshabilitado
+        
+        // Deshabilitar el botón durante la carga
+        setFloatingButtonEnabled(false);
+        
         if (lastMinimizedBotId && chatInstances[lastMinimizedBotId]) {
             // Restaurar la última instancia minimizada
+            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             restoreChatInstance(lastMinimizedBotId);
         } else {
             // Abrir el bot por defecto
+            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             openChatbase(bot.chatbaseId, bot.id);
         }
     };
@@ -218,6 +239,7 @@ function openChatbase(chatbotId, botId) {
         } else {
             // Si está minimizado, restaurarlo y minimizar cualquier otra instancia visible
             console.log('Restaurando instancia minimizada');
+            updateFloatingChatButton(); // Ocultar floating button inmediatamente
             restoreChatInstance(botId);
         }
         return;
@@ -233,6 +255,7 @@ function openChatbase(chatbotId, botId) {
 
     // Crear nueva instancia
     setButtonLoading(button, true);
+    updateFloatingChatButton(); // Ocultar floating button inmediatamente
     openChatbaseInstance(chatbotId, botId);
 }
 
@@ -324,6 +347,7 @@ function restoreChatInstance(botId) {
         console.error(`No existe instancia para bot: ${botId}`);
         return;
     }
+    
     
     // Si hay otra instancia visible de un bot diferente, minimizarla
     if (currentBotId && currentBotId !== botId && chatInstances[currentBotId] && chatInstances[currentBotId].isVisible) {

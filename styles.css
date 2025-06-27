@@ -460,7 +460,6 @@ h1 {
 .floating-chat-button {
     position: fixed;
     bottom: 20px;
-    left: 20px;
     width: 60px;
     height: 60px;
     background: #2563eb;
@@ -477,6 +476,14 @@ h1 {
     padding: 0;
 }
 
+.floating-chat-button-left {
+    left: 20px;
+}
+
+.floating-chat-button-right {
+    right: 20px;
+}
+
 .floating-chat-button:hover {
     background: #1d4ed8;
     transform: scale(1.1);
@@ -485,6 +492,18 @@ h1 {
 
 .floating-chat-button:active {
     transform: scale(0.95);
+}
+
+.floating-chat-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    box-shadow: 0 4px 20px rgba(156, 163, 175, 0.4);
+}
+
+.floating-chat-button:disabled:hover {
+    background: #9ca3af;
+    transform: none;
+    box-shadow: 0 4px 20px rgba(156, 163, 175, 0.4);
 }
 
 /* Responsive */
