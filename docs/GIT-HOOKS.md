@@ -59,6 +59,9 @@ git push --no-verify
 ## 🔧 Comandos Útiles
 
 ```bash
+# ⚠️ IMPORTANTE: Usar siempre la versión correcta de Node.js
+nvm use
+
 # Verificar manualmente todos los archivos
 pnpm check
 
@@ -77,6 +80,8 @@ pnpm prepush
 # Ver cobertura de tests
 pnpm test:coverage
 ```
+
+⚠️ **Nota Importante**: Siempre ejecuta `nvm use` antes de usar comandos con pnpm para asegurar que uses Node.js v22.14.0 y evitar warnings de versión.
 
 ## 📝 Ejemplo de Uso
 

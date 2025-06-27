@@ -30,12 +30,17 @@ Una aplicación web moderna que permite a los usuarios interactuar con múltiple
    cd chatbase
    ```
 
-2. **Instala las dependencias**:
+2. **Usa la versión correcta de Node.js**:
+   ```bash
+   nvm use  # Usar Node.js v22.14.0 especificado en .nvmrc
+   ```
+
+3. **Instala las dependencias**:
    ```bash
    pnpm install
    ```
 
-3. **Inicia el servidor de desarrollo**:
+4. **Inicia el servidor de desarrollo**:
    ```bash
    pnpm run dev
    ```

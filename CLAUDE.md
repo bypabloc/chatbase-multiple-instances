@@ -76,6 +76,8 @@ Each bot object contains:
 - **Testing Framework**: Vitest 3.2+ with 93%+ code coverage
 - **Production Build**: Creates optimized assets in `dist/` directory with tree-shaking, minification, and asset hashing
 
+⚠️ **IMPORTANT**: Always run `nvm use` before using pnpm commands to ensure you're using Node.js v22.14.0 and avoid version warnings.
+
 ## Code Quality Tools
 
 ### Biome.js Configuration

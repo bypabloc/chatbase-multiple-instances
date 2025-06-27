@@ -6,6 +6,13 @@ echo "
 ╚═══════════════════════════════════════════════════════════╝
 "
 
+# Use correct Node.js version
+if [ -f .nvmrc ]; then
+    echo "🔄 Switching to Node.js version from .nvmrc..."
+    nvm use
+    echo ""
+fi
+
 # 1. Check code quality
 echo "1️⃣  Checking code quality with Biome..."
 echo "───────────────────────────────────────────"

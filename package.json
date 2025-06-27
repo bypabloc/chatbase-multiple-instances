@@ -3,6 +3,9 @@
     "private": true,
     "type": "module",
     "scripts": {
+        "predev": "nvm use 2>/dev/null || echo '⚠️  Run: nvm use'",
+        "prebuild": "nvm use 2>/dev/null || echo '⚠️  Run: nvm use'",
+        "pretest": "nvm use 2>/dev/null || echo '⚠️  Run: nvm use'",
         "dev": "vite",
         "build": "vite build",
         "preview": "vite preview",
