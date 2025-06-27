@@ -415,6 +415,23 @@ h1 {
     background: #1d4ed8;
 }
 
+.load-default-button {
+    background: #f59e0b;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    width: 100%;
+    transition: background 0.3s ease;
+}
+
+.load-default-button:hover {
+    background: #d97706;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .container {

@@ -1,8 +1,8 @@
 // Este script usa el modo iframe por defecto para evitar conflictos al cambiar entre bots
 // Puedes cambiar useIframeMode a false si prefieres el widget, pero puede causar errores
 
-// Configuración inicial de bots
-let bots = [
+// Configuración por defecto de bots
+const defaultBots = [
     {
         id: 'sofi',
         name: 'Sofi',
@@ -33,6 +33,9 @@ let bots = [
     }
 ];
 
+// Configuración actual de bots (se carga desde localStorage o usa defaultBots)
+let bots = [...defaultBots];
+
 // Variable para rastrear las instancias de Chatbase
 let chatInstances = {}; // Almacena las instancias por botId
 let currentBotId = null;
@@ -51,6 +54,22 @@ function loadBots() {
 // Guardar bots en localStorage
 function saveBots() {
     localStorage.setItem('chatbaseBots', JSON.stringify(bots));
+}
+
+// Restaurar datos por defecto
+function loadDefaultBots() {
+    if (confirm('¿Estás seguro de que quieres restaurar los datos por defecto? Esto eliminará todos los bots personalizados.')) {
+        // Limpiar todas las instancias de chat existentes
+        cleanupAllInstances();
+        
+        // Restaurar bots por defecto
+        bots = [...defaultBots];
+        saveBots();
+        renderExperts();
+        renderBotList();
+        
+        console.log('Datos por defecto restaurados');
+    }
 }
 
 // Renderizar expertos
@@ -656,6 +675,7 @@ window.openConfig = openConfig;
 window.closeConfig = closeConfig;
 window.addBot = addBot;
 window.deleteBot = deleteBot;
+window.loadDefaultBots = loadDefaultBots;
 window.debugChatInstances = debugChatInstances;
 
 // Inicializar
