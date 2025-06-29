@@ -49,12 +49,21 @@ export default defineConfig({
         'shadow-xl',
         'shadow-2xl',
         'hover:scale-110',
-        'z-[9999]',
         'bg-gray-400',
         'hover:shadow-2xl',
         // Body width classes
         'w-full',
         'max-w-full',
+        // Modern design classes
+        'rounded-xl',
+        'shadow-sm',
+        'hover:shadow-md',
+        'border-gray-100',
+        'hover:border-gray-200',
+        'mb-4',
+        'p-6',
+        'duration-200',
+        'scrollbar-modern',
     ],
     presets: [
         presetWind4({

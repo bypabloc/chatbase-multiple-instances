@@ -6,7 +6,7 @@
     <title>Expertos que te apoyan - Chatbase</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="font-sans bg-gray-light min-h-screen w-full max-w-full p-5">
+<body class="font-sans bg-gray-light min-h-screen w-full max-w-full p-5 scrollbar-modern">
     <!-- GitHub Repository Link -->
     <a href="https://github.com/bypabloc/chatbase-multiple-instances" target="_blank" rel="noopener noreferrer" 
        class="fixed top-5 left-5 flex items-center gap-2 px-4 py-2.5 bg-github-dark text-white no-underline rounded-lg text-sm font-medium z-[1000] transition-all duration-300 shadow-md hover:bg-github-darker hover:-translate-y-0.5 hover:shadow-lg md:px-3 md:py-2 md:text-xs md:top-2.5 md:left-2.5">
@@ -40,7 +40,7 @@
 
     <!-- Modal de Configuración -->
     <div class="hidden fixed top-0 left-0 w-full h-full bg-black/50 z-[2000] animate-fade-in [&.active]:flex [&.active]:items-center [&.active]:justify-center" id="configModal">
-        <div class="bg-white rounded-2xl p-8 max-w-[600px] w-[90%] max-h-[80vh] overflow-y-auto animate-slide-in">
+        <div class="bg-white rounded-2xl p-8 max-w-[600px] w-[90%] max-h-[80vh] overflow-y-auto animate-slide-in scrollbar-modern">
             <div class="flex justify-between items-center mb-5">
                 <h2 class="text-2xl font-bold text-slate-800">Configuración de Bots</h2>
                 <button class="bg-transparent border-none text-2xl cursor-pointer text-slate-500 p-1 transition-colors duration-300 hover:text-slate-800" onclick="closeConfig()">&times;</button>
@@ -75,10 +75,10 @@
                 <h3 class="mb-4 text-lg text-slate-800 font-semibold">Opciones avanzadas</h3>
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-slate-800 mb-1">Importar configuración desde archivo JSON</label>
-                    <input type="file" id="importFile" accept=".json" class="mb-2.5 p-2 border border-gray-300 rounded-lg w-full text-sm">
-                    <button class="bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5" onclick="importFromFile()">Importar datos</button>
+                    <input type="file" id="importFile" accept=".json" class="mb-2.5 p-2 border border-gray-300 rounded-lg w-full text-sm" onchange="chatManager.updateButtonStates()">
+                    <button id="importButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5" disabled onclick="importFromFile()">Importar datos</button>
                 </div>
-                <button class="bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700" onclick="clearAllBots()">Eliminar todos los bots</button>
+                <button id="clearAllButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300" disabled onclick="clearAllBots()">Eliminar todos los bots</button>
             </div>
         </div>
     </div>

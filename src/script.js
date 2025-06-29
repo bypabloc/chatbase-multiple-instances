@@ -281,7 +281,7 @@ class ChatbaseManager {
         floatingButton.id = 'floating-chat-button'
         floatingButton.title = buttonText
         floatingButton.className =
-            'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 z-[9999] p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
+            'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
         floatingButton.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -948,6 +948,7 @@ class ChatbaseManager {
             this.renderExperts()
             this.renderBotList()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
 
             console.log('All bots deleted')
         } catch (error) {
@@ -1061,9 +1062,47 @@ class ChatbaseManager {
         this.updateFloatingChatButton()
 
         fileInput.value = ''
+        this.updateButtonStates()
 
         alert(`Se importaron ${importedData.length} bot(s) correctamente`)
         console.log('Data imported successfully:', importedData)
+    }
+
+    /**
+     * Update button states based on conditions
+     */
+    updateButtonStates() {
+        const importFile = document.getElementById('importFile')
+        const importButton = document.getElementById('importButton')
+        const clearAllButton = document.getElementById('clearAllButton')
+
+        // Enable/disable import button based on file selection
+        if (importFile && importButton) {
+            const hasFile = importFile.files && importFile.files.length > 0
+            if (hasFile) {
+                importButton.disabled = false
+                importButton.className =
+                    'bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5'
+            } else {
+                importButton.disabled = true
+                importButton.className =
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5'
+            }
+        }
+
+        // Enable/disable clear all button based on bots existence
+        if (clearAllButton) {
+            const hasBots = this.bots && this.bots.length > 0
+            if (hasBots) {
+                clearAllButton.disabled = false
+                clearAllButton.className =
+                    'bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700'
+            } else {
+                clearAllButton.disabled = true
+                clearAllButton.className =
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300'
+            }
+        }
     }
 
     /**
@@ -1074,6 +1113,7 @@ class ChatbaseManager {
         modal.classList.remove('hidden')
         modal.classList.add('active')
         this.renderBotList()
+        this.updateButtonStates()
     }
 
     /**
@@ -1108,7 +1148,7 @@ class ChatbaseManager {
     createBotListItem(bot, index) {
         const botItem = document.createElement('div')
         botItem.className =
-            'bg-slate-50 border border-gray-200 rounded-lg p-4 mb-2.5 flex justify-between items-center'
+            'bg-white border border-gray-100 rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200'
         botItem.innerHTML = `
             <div class="flex-1">
                 <div class="font-semibold text-slate-800 mb-1">${bot.name}</div>
@@ -1142,6 +1182,7 @@ class ChatbaseManager {
         this.renderExperts()
         this.renderBotList()
         this.clearBotForm()
+        this.updateButtonStates()
     }
 
     /**
@@ -1213,6 +1254,7 @@ class ChatbaseManager {
         this.saveBots()
         this.renderExperts()
         this.renderBotList()
+        this.updateButtonStates()
     }
 
     /**
