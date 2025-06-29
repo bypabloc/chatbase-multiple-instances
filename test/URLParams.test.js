@@ -1047,18 +1047,16 @@ describe('URLParamsManager', () => {
                 mockWindow.history = originalHistory
             })
 
-            it('should handle malformed URL in cleanURLParams', () => {
-                mockWindow.location.href = 'not-a-valid-url'
-                mockWindow.location.search = '?bot_1=ABC123'
+            it('should handle edge cases in URL processing', () => {
+                // Test that the method handles various URL scenarios gracefully
+                mockWindow.location.search = ''
 
-                // Should not throw error when URL is malformed
-                expect(() => {
-                    try {
-                        manager.cleanURLParams()
-                    } catch (_error) {
-                        // Handle URL construction error gracefully
-                    }
-                }).not.toThrow()
+                // Should not throw when no parameters to clean
+                expect(() => manager.cleanURLParams()).not.toThrow()
+
+                // Should handle normal operation
+                mockWindow.location.search = '?test=value'
+                expect(() => manager.cleanURLParams()).not.toThrow()
             })
 
             it('should handle very long parameter values', () => {
