@@ -4,10 +4,10 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+    mockBots,
     mockDesktopViewport,
     mockMobileViewport,
     setupLocalStorageWithBots,
-    mockBots,
 } from './helpers.js'
 
 // Mock window.matchMedia

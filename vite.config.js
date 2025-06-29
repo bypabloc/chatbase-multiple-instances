@@ -1,5 +1,9 @@
 import { defineConfig, loadEnv } from 'vite'
 import UnoCSS from 'unocss/vite'
+import { resolve } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '')
@@ -11,7 +15,20 @@ export default defineConfig(({ mode }) => {
         },
 
         // Plugins
-        plugins: [UnoCSS()],
+        plugins: [
+            UnoCSS(),
+            {
+                name: 'custom-routes',
+                configureServer(server) {
+                    server.middlewares.use((req, _res, next) => {
+                        if (req.url === '/files' || req.url === '/files/') {
+                            req.url = '/pages/files.html'
+                        }
+                        next()
+                    })
+                },
+            },
+        ],
 
         // Configuración del servidor de desarrollo
         server: {
@@ -32,6 +49,10 @@ export default defineConfig(({ mode }) => {
 
             // Optimizaciones avanzadas
             rollupOptions: {
+                input: {
+                    main: resolve(__dirname, 'src/index.html'),
+                    files: resolve(__dirname, 'src/pages/files.html'),
+                },
                 output: {
                     // Nombres de archivos optimizados
                     entryFileNames: 'assets/[name].[hash].js',

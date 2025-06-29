@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock @vercel/analytics before importing script.js
 vi.mock('@vercel/analytics', () => ({
