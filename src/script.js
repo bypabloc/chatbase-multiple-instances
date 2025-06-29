@@ -1,5 +1,6 @@
 import { inject } from '@vercel/analytics'
 import 'uno.css'
+import logger from './logger.js'
 
 inject()
 
@@ -96,9 +97,9 @@ const STYLES = {
  * @param {string} suffix - Suffix for the ID (optional)
  * @returns {string} Unique ID
  */
-function generateId(prefix, suffix = '') {
+const generateId = (prefix, suffix = '') => {
     const timestamp = Date.now()
-    const random = Math.random().toString(36).substr(2, 9)
+    const random = Math.random().toString(36).substring(2, 11)
     return suffix ? `${prefix}-${suffix}-${random}` : `${prefix}-${timestamp}-${random}`
 }
 
@@ -109,7 +110,7 @@ function generateId(prefix, suffix = '') {
  * @param {string} className - CSS classes
  * @returns {HTMLElement} Created element
  */
-function createElement(tag, id, className = '') {
+const createElement = (tag, id, className = '') => {
     const element = document.createElement(tag)
     element.id = id
     if (className) element.className = className
@@ -123,7 +124,7 @@ function createElement(tag, id, className = '') {
  * @param {string} size - Size classes (e.g., 'w-4 h-4')
  * @returns {HTMLElement} Icon element
  */
-function createIcon(iconClass, id, size = 'w-4 h-4') {
+const createIcon = (iconClass, id, size = 'w-4 h-4') => {
     const icon = document.createElement('div')
     icon.id = id
     icon.className = `${iconClass} ${size}`
@@ -146,7 +147,7 @@ const ElementHelper = {
  * @param {string} url - URL to validate
  * @returns {boolean} True if valid URL
  */
-function isValidUrl(url) {
+const isValidUrl = url => {
     try {
         new URL(url)
         return true
@@ -160,7 +161,7 @@ function isValidUrl(url) {
  * @param {Object} formData - Form data to validate
  * @returns {Object} Validation result with isValid and errors
  */
-function validateBotForm(formData) {
+const validateBotForm = formData => {
     const errors = []
 
     if (!formData.name?.trim()) {
@@ -190,7 +191,7 @@ function validateBotForm(formData) {
  * @param {Array} importedData - Data to validate
  * @returns {Object} Validation result
  */
-function validateImportData(importedData) {
+const validateImportData = importedData => {
     if (!Array.isArray(importedData)) {
         return {
             isValid: false,
@@ -233,7 +234,7 @@ function validateImportData(importedData) {
  * @param {File} file - File to validate
  * @returns {Object} Validation result
  */
-function validateImportFile(file) {
+const validateImportFile = file => {
     if (!file) {
         return {
             isValid: false,
@@ -413,7 +414,7 @@ class ChatbaseManager {
             this.updateFloatingChatButton()
             this.updateButtonStates()
         } catch (error) {
-            console.error('Error loading bots:', error)
+            logger.error('Error loading bots:', error)
             this.bots = []
             this.renderExperts()
             this.updateFloatingChatButton()
@@ -720,10 +721,10 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     openChatbase(chatbotId, botId) {
-        // Opening chatbase for bot
+        logger.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`)
 
         if (this.isTransitioning) {
-            // Transition in progress, ignoring click
+            logger.log('Transition in progress, ignoring click')
             return
         }
 
@@ -734,7 +735,7 @@ class ChatbaseManager {
             return
         }
 
-        // Creating new instance
+        logger.log('Creating new instance')
         this.handleNewInstance(chatbotId, botId, button)
     }
 
@@ -744,13 +745,13 @@ class ChatbaseManager {
      */
     handleExistingInstance(botId) {
         const instance = this.chatInstances[botId]
-        // Existing instance found
+        logger.log(`Existing instance found. Visible: ${instance.isVisible}`)
 
         if (instance.isVisible) {
-            // Minimizing visible instance
+            logger.log('Minimizing visible instance')
             this.minimizeChatInstance(botId)
         } else {
-            // Restoring minimized instance
+            logger.log('Restoring minimized instance')
             this.restoreChatInstance(botId)
         }
     }
@@ -768,7 +769,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            // Minimizing previous instance
+            logger.log(`Minimizing previous instance: ${this.currentBotId}`)
             this.minimizeChatInstance(this.currentBotId)
         }
 
@@ -802,13 +803,13 @@ class ChatbaseManager {
      * @param {string} state - State: 'active', 'minimized', 'loading', 'default'
      */
     updateButtonState(botId, state) {
-        // Updating button state
+        logger.log(`Updating button state for bot: ${botId}, state: ${state}`)
 
         const button = document.getElementById(`btn-${botId}`)
         const bot = this.bots.find(b => b.id === botId)
 
         if (!button || !bot) {
-            console.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`)
+            logger.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`)
             return
         }
 
@@ -816,46 +817,43 @@ class ChatbaseManager {
 
         const buttonTextElement = button.querySelector(`#btn-text-${botId}`)
 
-        switch (state) {
-            case 'active':
-                button.className =
-                    'bg-brand-green text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-green-700 hover:scale-105 active:scale-95'
-                if (buttonTextElement) {
-                    buttonTextElement.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
-                } else {
-                    button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
-                }
-                break
-            case 'minimized':
-                button.className =
-                    'bg-brand-orange text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-orange-dark hover:scale-105 active:scale-95'
-                if (buttonTextElement) {
-                    buttonTextElement.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
-                } else {
-                    button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
-                }
-                break
-            case 'loading':
-                button.className =
-                    'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5'
-                if (buttonTextElement) {
-                    buttonTextElement.textContent = 'CARGANDO...'
-                } else {
-                    button.textContent = 'CARGANDO...'
-                }
-                button.disabled = true
-                break
-            default:
-                button.className =
-                    'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95'
-                if (buttonTextElement) {
-                    buttonTextElement.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
-                } else {
-                    button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
-                }
+        const stateConfigs = {
+            active: {
+                className:
+                    'bg-brand-green text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-green-700 hover:scale-105 active:scale-95',
+                text: `MINIMIZAR ${bot.name.toUpperCase()}`,
+                disabled: false,
+            },
+            minimized: {
+                className:
+                    'bg-brand-orange text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-orange-dark hover:scale-105 active:scale-95',
+                text: `HABLAR CON ${bot.name.toUpperCase()}`,
+                disabled: false,
+            },
+            loading: {
+                className:
+                    'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5',
+                text: 'CARGANDO...',
+                disabled: true,
+            },
         }
 
-        // Button updated
+        const config = stateConfigs[state] || {
+            className:
+                'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95',
+            text: `HABLAR CON ${bot.name.toUpperCase()}`,
+            disabled: false,
+        }
+
+        button.className = config.className
+        if (buttonTextElement) {
+            buttonTextElement.textContent = config.text
+        } else {
+            button.textContent = config.text
+        }
+        button.disabled = config.disabled
+
+        logger.log(`Button updated for ${bot.name}`)
     }
 
     /**
@@ -875,7 +873,7 @@ class ChatbaseManager {
 
             this.currentBotId = botId
         } catch (error) {
-            console.error('Error creating chat instance:', error)
+            logger.error('Error creating chat instance:', error)
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
         }
@@ -976,9 +974,9 @@ class ChatbaseManager {
         }
 
         iframe.onerror = () => {
+            logger.error('Error loading Chatbase iframe')
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
-            console.error('Error loading Chatbase iframe')
         }
 
         return iframe
@@ -1068,7 +1066,7 @@ class ChatbaseManager {
         }
 
         script.onerror = () => {
-            console.error('Error loading Chatbase - switching to iframe mode')
+            logger.error('Error loading Chatbase - switching to iframe mode')
             CONFIG.IFRAME_MODE = true
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
@@ -1088,11 +1086,11 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     minimizeChatInstance(botId) {
-        // Minimizing chat instance
+        logger.log(`Minimizing chat instance for bot: ${botId}`)
 
         const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`)
+            logger.error(`No instance found for bot: ${botId}`)
             return
         }
 
@@ -1108,9 +1106,9 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      * @returns {boolean} True if container is valid
      */
-    validateInstanceContainer(instance, botId) {
+    validateInstanceContainer(instance, _botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} not found in DOM during minimize`)
+            logger.error(`Container for bot not found in DOM during minimize`)
             return false
         }
         return true
@@ -1126,7 +1124,7 @@ class ChatbaseManager {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
 
-        // Hiding container
+        logger.log(`Hiding container for bot`)
         instance.container.style.display = 'none'
         instance.isVisible = false
 
@@ -1150,7 +1148,7 @@ class ChatbaseManager {
         }
 
         this.updateFloatingChatButton()
-        // Bot state updated successfully
+        logger.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`)
     }
 
     /**
@@ -1158,11 +1156,11 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     restoreChatInstance(botId) {
-        // Restoring chat instance
+        logger.log(`Restoring chat instance for bot: ${botId}`)
 
         const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`)
+            logger.error(`No instance found for bot: ${botId}`)
             return
         }
 
@@ -1187,7 +1185,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            // Minimizing previous visible instance
+            logger.log(`Minimizing previous visible instance: ${this.currentBotId}`)
             this.minimizeChatInstance(this.currentBotId)
         }
     }
@@ -1200,11 +1198,10 @@ class ChatbaseManager {
      */
     validateAndRecreateInstance(instance, botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} no longer exists in DOM. Recreating...`)
             delete this.chatInstances[botId]
             const bot = this.bots.find(b => b.id === botId)
             if (bot) {
-                // Recreating instance
+                logger.log(`Recreating instance for bot: ${botId}`)
                 this.createChatInstance(bot.chatbaseId, botId)
             }
             return false
@@ -1218,7 +1215,7 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     showInstance(instance, _botId) {
-        // Restoring bot instance
+        logger.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
 
         // Disable mobile scroll when chat instance is shown/restored
         this.disableMobileScroll()
@@ -1227,7 +1224,11 @@ class ChatbaseManager {
         instance.container.style.visibility = 'visible'
         instance.isVisible = true
 
-        // Display updated
+        logger.log(`Display after change:`, instance.container.style.display)
+        logger.log(
+            `Container visible on screen:`,
+            instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0
+        )
     }
 
     /**
@@ -1329,7 +1330,7 @@ class ChatbaseManager {
             this.chatInstances = {}
             this.currentBotId = null
         } catch (error) {
-            console.error('Error cleaning up instances:', error)
+            logger.error('Error cleaning up instances:', error)
         }
     }
 
@@ -1394,9 +1395,9 @@ class ChatbaseManager {
             this.updateFloatingChatButton()
             this.updateButtonStates()
 
-            // All bots deleted
+            logger.log('All bots deleted')
         } catch (error) {
-            console.error('Error deleting bots:', error)
+            logger.error('Error cleaning up instances:', error)
         }
     }
 
@@ -1447,7 +1448,7 @@ class ChatbaseManager {
                 this.executeImport(importedData, fileInput)
             }
         } catch (error) {
-            console.error('Error importing file:', error)
+            logger.error('Error importing file:', error)
             alert('Error al procesar el archivo JSON. Verifica que el formato sea válido.')
         }
     }
@@ -1484,7 +1485,7 @@ class ChatbaseManager {
         this.updateButtonStates()
 
         alert(`Se importaron ${importedData.length} bot(s) correctamente`)
-        // Data imported successfully
+        logger.log('Data imported successfully:', importedData)
     }
 
     /**
@@ -1705,26 +1706,26 @@ class ChatbaseManager {
         // Only run in development
         if (import.meta.env.PROD) return
 
-        console.log('=== Chat Instances Debug ===')
-        console.log('Current Bot ID:', this.currentBotId)
-        console.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
-        console.log('Chat Instances:', Object.keys(this.chatInstances))
+        logger.log('=== Chat Instances Debug ===')
+        logger.log('Current Bot ID:', this.currentBotId)
+        logger.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
+        logger.log('Chat Instances:', Object.keys(this.chatInstances))
 
         Object.entries(this.chatInstances).forEach(([botId, instance]) => {
-            console.log(`\nBot ${botId}:`)
-            console.log('- Is Visible:', instance.isVisible)
-            console.log('- Has Container:', !!instance.container)
-            console.log(
+            logger.log(`\nBot ${botId}:`)
+            logger.log('- Is Visible:', instance.isVisible)
+            logger.log('- Has Container:', !!instance.container)
+            logger.log(
                 '- Container in DOM:',
                 instance.container ? document.body.contains(instance.container) : false
             )
-            console.log(
+            logger.log(
                 '- Container Display:',
                 instance.container ? instance.container.style.display : 'N/A'
             )
-            console.log('- Chatbot ID:', instance.chatbotId)
+            logger.log('- Chatbot ID:', instance.chatbotId)
         })
-        console.log('=======================')
+        logger.log('=======================')
     }
 }
 
@@ -1745,5 +1746,5 @@ window.debugChatInstances = () => chatManager.debugChatInstances()
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Chatbase Manager initialized
+    logger.log('Chatbase Manager initialized')
 })

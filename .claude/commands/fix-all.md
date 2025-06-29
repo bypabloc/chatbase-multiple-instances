@@ -75,11 +75,59 @@ pnpm build
 ```
 - Verifica que el build de producción sea exitoso
 
-#### Fase 6: Optimizaciones
+#### Fase 6: Optimizaciones y Refactoring
 - Elimina imports no usados
 - Ordena imports según convención
-- Elimina console.logs en producción
+- Reemplaza console.* con el Logger class (solo permitido en src/logger.js)
+- Convierte todas las funciones declaradas con `function` a arrow functions
+- Reemplaza todos los `switch/case` con Object Literal Lookup
+- Asegura que todas las variables usen `const` o `let` (no `var`)
 - Optimiza imágenes si las hay
+
+**Uso del Logger:**
+```javascript
+// Antes
+console.log('Debug info')
+console.error('Error occurred')
+
+// Después
+import logger from './logger.js'
+logger.log('Debug info')    // Solo aparece en ENV=local o ENV=dev
+logger.error('Error occurred')  // Siempre aparece
+```
+
+**Conversión de funciones:**
+```javascript
+// Antes
+function myFunction(param) {
+    return param * 2
+}
+
+// Después
+const myFunction = (param) => {
+    return param * 2
+}
+```
+
+**Conversión de switch/case:**
+```javascript
+// Antes
+switch(action) {
+    case 'add':
+        return a + b
+    case 'subtract':
+        return a - b
+    default:
+        return 0
+}
+
+// Después
+const operations = {
+    add: () => a + b,
+    subtract: () => a - b
+}
+return operations[action]?.() || 0
+```
 
 ### 3. Validación final completa
 ```bash
