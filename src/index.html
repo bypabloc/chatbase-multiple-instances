@@ -75,12 +75,38 @@
             
             <div class="mt-5 pt-5 border-t border-gray-200">
                 <h3 class="mb-4 text-lg text-slate-800 font-semibold">Opciones avanzadas</h3>
+                
+                <!-- Theme Switch -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-800 mb-3">Tema de la aplicación</label>
+                    <div class="flex items-center justify-between bg-gray-100 rounded-lg p-1" id="themeSwitch">
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="light">
+                            <div class="i-heroicons-sun w-4 h-4"></div>
+                            Claro
+                        </button>
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="dark">
+                            <div class="i-heroicons-moon w-4 h-4"></div>
+                            Oscuro
+                        </button>
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="system">
+                            <div class="i-heroicons-computer-desktop w-4 h-4"></div>
+                            Sistema
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="mb-4">
                     <label class="block text-sm font-semibold text-slate-800 mb-1">Importar configuración desde archivo JSON</label>
                     <input type="file" id="importFile" accept=".json" class="mb-2.5 p-2 border border-gray-300 rounded-lg w-full text-sm" onchange="chatManager.updateButtonStates()">
-                    <button id="importButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5" disabled onclick="importFromFile()">Importar datos</button>
+                    <button id="importButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5 flex items-center justify-center gap-2" disabled onclick="importFromFile()">
+                        <div class="i-heroicons-arrow-down-tray w-4 h-4"></div>
+                        Importar datos
+                    </button>
                 </div>
-                <button id="clearAllButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300" disabled onclick="clearAllBots()">Eliminar todos los bots</button>
+                <button id="clearAllButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 flex items-center justify-center gap-2" disabled onclick="clearAllBots()">
+                    <div class="i-heroicons-exclamation-triangle w-4 h-4"></div>
+                    Eliminar todos los bots
+                </button>
             </div>
         </div>
     </div>

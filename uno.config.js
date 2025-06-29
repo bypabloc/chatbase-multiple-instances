@@ -80,11 +80,20 @@ export default defineConfig({
         'i-heroicons-heart',
         'i-heroicons-cog-6-tooth',
         'i-heroicons-x-mark',
+        'i-heroicons-sun',
+        'i-heroicons-moon',
+        'i-heroicons-computer-desktop',
         // Card layout classes
         'flex-col',
         'min-h-[320px]',
         'flex-grow',
         'mt-auto',
+        // Theme switch classes
+        'bg-white',
+        'text-slate-900',
+        'shadow-sm',
+        'text-slate-600',
+        'hover:text-slate-900',
     ],
     presets: [
         presetWind4({

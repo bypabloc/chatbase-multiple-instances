@@ -4,8 +4,23 @@
 
 import { screen } from '@testing-library/dom'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockFile, invalidBots, mockBots, setupLocalStorageWithBots } from './helpers.js'
+
+// Mock window.matchMedia for theme system
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+})
 
 // Extended ChatbaseManager with full bot management functionality
 const mockChatbaseManagerClass = class ChatbaseManager {

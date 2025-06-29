@@ -96,6 +96,7 @@ class ChatbaseManager {
         this.currentBotId = null
         this.lastMinimizedBotId = null
         this.isTransitioning = false
+        this.currentTheme = 'system'
         this.init()
     }
 
@@ -105,6 +106,7 @@ class ChatbaseManager {
     init() {
         this.loadBots()
         this.setupEventListeners()
+        this.initTheme()
     }
 
     /**
@@ -280,6 +282,98 @@ class ChatbaseManager {
             document.body.style.position = ''
             document.body.style.width = ''
             document.body.style.top = ''
+        }
+    }
+
+    /**
+     * Initialize theme system
+     */
+    initTheme() {
+        // Load saved theme preference
+        this.currentTheme = localStorage.getItem('theme') || 'system'
+
+        // Apply theme
+        this.applyTheme(this.currentTheme)
+
+        // Setup theme switch event listeners
+        this.setupThemeSwitch()
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (this.currentTheme === 'system') {
+                this.applyTheme('system')
+            }
+        })
+    }
+
+    /**
+     * Setup theme switch event listeners
+     */
+    setupThemeSwitch() {
+        const themeSwitch = document.getElementById('themeSwitch')
+        if (!themeSwitch) return
+
+        themeSwitch.addEventListener('click', e => {
+            const button = e.target.closest('[data-theme]')
+            if (!button) return
+
+            const theme = button.dataset.theme
+            this.setTheme(theme)
+        })
+
+        // Update UI to reflect current theme
+        this.updateThemeSwitchUI()
+    }
+
+    /**
+     * Set theme and save preference
+     * @param {string} theme - Theme name: 'light', 'dark', or 'system'
+     */
+    setTheme(theme) {
+        this.currentTheme = theme
+        localStorage.setItem('theme', theme)
+        this.applyTheme(theme)
+        this.updateThemeSwitchUI()
+    }
+
+    /**
+     * Apply theme to document
+     * @param {string} theme - Theme name: 'light', 'dark', or 'system'
+     */
+    applyTheme(theme) {
+        const html = document.documentElement
+
+        // Remove existing theme classes
+        html.classList.remove('light', 'dark')
+
+        if (theme === 'system') {
+            // Use system preference
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+            html.classList.add(systemPrefersDark ? 'dark' : 'light')
+        } else {
+            // Use explicit theme
+            html.classList.add(theme)
+        }
+    }
+
+    /**
+     * Update theme switch UI to reflect current selection
+     */
+    updateThemeSwitchUI() {
+        const themeSwitch = document.getElementById('themeSwitch')
+        if (!themeSwitch) return
+
+        // Remove active state from all buttons
+        themeSwitch.querySelectorAll('[data-theme]').forEach(btn => {
+            btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm')
+            btn.classList.add('text-slate-600', 'hover:text-slate-900')
+        })
+
+        // Add active state to current theme
+        const activeButton = themeSwitch.querySelector(`[data-theme="${this.currentTheme}"]`)
+        if (activeButton) {
+            activeButton.classList.add('bg-white', 'text-slate-900', 'shadow-sm')
+            activeButton.classList.remove('text-slate-600', 'hover:text-slate-900')
         }
     }
 
@@ -1201,11 +1295,15 @@ class ChatbaseManager {
             if (hasFile) {
                 importButton.disabled = false
                 importButton.className =
-                    'bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5'
+                    'bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5 flex items-center justify-center gap-2'
+                importButton.innerHTML =
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4"></div>Importar datos'
             } else {
                 importButton.disabled = true
                 importButton.className =
-                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5'
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5 flex items-center justify-center gap-2'
+                importButton.innerHTML =
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4"></div>Importar datos'
             }
         }
 
@@ -1215,11 +1313,15 @@ class ChatbaseManager {
             if (hasBots) {
                 clearAllButton.disabled = false
                 clearAllButton.className =
-                    'bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700'
+                    'bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700 flex items-center justify-center gap-2'
+                clearAllButton.innerHTML =
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4"></div>Eliminar todos los bots'
             } else {
                 clearAllButton.disabled = true
                 clearAllButton.className =
-                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300'
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 flex items-center justify-center gap-2'
+                clearAllButton.innerHTML =
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4"></div>Eliminar todos los bots'
             }
         }
     }
@@ -1233,6 +1335,7 @@ class ChatbaseManager {
         modal.classList.add('active')
         this.renderBotList()
         this.updateButtonStates()
+        this.setupThemeSwitch()
     }
 
     /**
@@ -1284,7 +1387,10 @@ class ChatbaseManager {
                            onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer">
                     <span class="select-none">Por defecto</span>
                 </label>
-                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600" onclick="chatManager.deleteBot(${index})">Eliminar</button>
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center gap-1" onclick="chatManager.deleteBot(${index})">
+                    <div class="i-heroicons-trash w-3 h-3"></div>
+                    Eliminar
+                </button>
             </div>
         `
         return botItem

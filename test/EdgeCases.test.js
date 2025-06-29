@@ -5,6 +5,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createMockClickEvent, mockBots } from './helpers.js'
 
+// Mock window.matchMedia for theme system
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+})
+
 // Comprehensive ChatbaseManager for edge case testing
 const mockChatbaseManagerClass = class ChatbaseManager {
     constructor() {
