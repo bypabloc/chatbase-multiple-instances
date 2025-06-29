@@ -32,7 +32,7 @@ describe('Real Code Coverage Tests', () => {
         vi.clearAllMocks()
 
         // Dynamically import the real script to get coverage
-        const _module = await import('../src/script.js')
+        await import('../src/script.js')
 
         // Access the global chatManager that gets created
         chatManager = window.chatManager

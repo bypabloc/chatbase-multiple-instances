@@ -20,15 +20,17 @@ const CONFIG = {
 const STYLES = {
     CHAT_CONTAINER_MOBILE: `
         position: fixed;
-        bottom: 10px;
-        right: 10px;
-        left: 10px;
-        width: calc(100vw - 20px);
-        height: calc(100vh - 100px);
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100vw;
+        height: 100vh;
         z-index: 9999;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
+        background: transparent;
     `,
     CHAT_CONTAINER_DESKTOP: `
         position: fixed;
@@ -47,6 +49,14 @@ const STYLES = {
         border-radius: 16px;
         overflow: hidden;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        background: white;
+    `,
+    IFRAME_CONTAINER_MOBILE: `
+        width: 100%;
+        height: calc(100% - 60px);
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: none;
         background: white;
     `,
     CLOSE_BUTTON: `
@@ -100,6 +110,7 @@ class ChatbaseManager {
     setupEventListeners() {
         window.addEventListener('beforeunload', () => this.cleanupAllInstances())
         window.onclick = event => this.handleModalClick(event)
+        window.addEventListener('resize', () => this.handleResize())
     }
 
     /**
@@ -111,6 +122,45 @@ class ChatbaseManager {
         if (event.target === modal) {
             this.closeConfig()
         }
+    }
+
+    /**
+     * Handle window resize - update chat instances for mobile/desktop changes
+     */
+    handleResize() {
+        // Throttle resize events
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout)
+        }
+
+        this.resizeTimeout = setTimeout(() => {
+            this.updateChatInstancesForResize()
+        }, 100)
+    }
+
+    /**
+     * Update all active chat instances when screen size changes
+     */
+    updateChatInstancesForResize() {
+        Object.keys(this.chatInstances).forEach(botId => {
+            const instance = this.chatInstances[botId]
+            if (instance && instance.container) {
+                // Update container styles
+                instance.container.style.cssText = this.isMobile()
+                    ? STYLES.CHAT_CONTAINER_MOBILE
+                    : STYLES.CHAT_CONTAINER_DESKTOP
+
+                // Find and update iframe container
+                const iframeContainer = instance.container.querySelector(
+                    `#chatbase-iframe-container-${botId}`
+                )
+                if (iframeContainer) {
+                    iframeContainer.style.cssText = this.isMobile()
+                        ? STYLES.IFRAME_CONTAINER_MOBILE
+                        : STYLES.IFRAME_CONTAINER
+                }
+            }
+        })
     }
 
     /**
@@ -522,7 +572,9 @@ class ChatbaseManager {
     createIframeContainer(botId) {
         const iframeContainer = document.createElement('div')
         iframeContainer.id = `chatbase-iframe-container-${botId}`
-        iframeContainer.style.cssText = STYLES.IFRAME_CONTAINER
+        iframeContainer.style.cssText = this.isMobile()
+            ? STYLES.IFRAME_CONTAINER_MOBILE
+            : STYLES.IFRAME_CONTAINER
         return iframeContainer
     }
 

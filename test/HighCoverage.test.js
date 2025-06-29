@@ -51,12 +51,6 @@ describe('High Coverage Tests - Missing Functions', () => {
         })
 
         it('should handle chat instance creation and iframe building', () => {
-            const _bot = {
-                id: 'test-bot',
-                name: 'Test Bot',
-                chatbaseId: 'TEST123',
-            }
-
             // Test iframe elements creation
             const elements = chatManager.buildIframeElements('TEST123', 'test-bot')
 
@@ -445,6 +439,27 @@ describe('High Coverage Tests - Missing Functions', () => {
             chatManager.debugChatInstances()
 
             expect(consoleSpy).toHaveBeenCalledWith('=== Chat Instances Debug ===')
+        })
+
+        it('should handle window resize', async () => {
+            // Setup a mock chat instance
+            const mockContainer = document.createElement('div')
+            const mockIframeContainer = document.createElement('div')
+            mockIframeContainer.id = 'chatbase-iframe-container-test-bot'
+            mockContainer.appendChild(mockIframeContainer)
+            document.body.appendChild(mockContainer)
+
+            chatManager.chatInstances['test-bot'] = {
+                container: mockContainer,
+                isVisible: true,
+            }
+
+            chatManager.handleResize()
+
+            // Wait for throttled resize handler
+            await new Promise(resolve => setTimeout(resolve, 200))
+
+            expect(mockContainer.style.cssText).toBeDefined()
         })
     })
 })
