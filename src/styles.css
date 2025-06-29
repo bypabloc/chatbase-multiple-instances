@@ -18,9 +18,10 @@
         }
 
         [id*="chatbase-iframe-container"] {
-            border-radius: 0 !important;
+            border-radius: 20px !important; /* rounded-[20px] equivalent */
             box-shadow: none !important;
             pointer-events: auto !important;
+            padding: 1.25rem !important; /* p-5 equivalent: 20px */
         }
     }
 

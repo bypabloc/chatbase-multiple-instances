@@ -97,6 +97,16 @@ export default defineConfig({
         'shadow-sm',
         'text-slate-600',
         'hover:text-slate-900',
+        // Default bot indicator classes
+        'border-2',
+        'border-brand-blue',
+        'bg-blue-50',
+        'absolute',
+        'top-2',
+        'right-2',
+        'rounded-full',
+        'font-semibold',
+        'hover:bg-brand-blue-dark',
     ],
     presets: [
         presetWind4({

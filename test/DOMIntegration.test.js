@@ -221,31 +221,33 @@ const mockChatbaseManagerClass = class ChatbaseManager {
         botItem.className = 'bot-item'
         botItem.setAttribute('data-testid', `bot-item-${bot.id}`)
 
+        // Apply different styles for default bot
+        const borderClass = bot.isDefault 
+            ? 'border-2 border-brand-blue bg-blue-50' 
+            : 'border border-gray-100 bg-white'
+
         botItem.innerHTML = `
+      ${bot.isDefault ? '<div class="default-badge">POR DEFECTO</div>' : ''}
       <div class="bot-info">
         <div class="bot-name">${bot.name}</div>
         <div class="bot-id">ID: ${bot.chatbaseId}</div>
         ${bot.avatar ? '<div class="bot-id">Avatar: Personalizado</div>' : '<div class="bot-id">Avatar: Iniciales</div>'}
       </div>
       <div class="bot-controls">
-        <label class="default-radio-label">
-          <input 
-            type="radio" 
-            name="defaultBot" 
-            value="${bot.id}" 
-            ${bot.isDefault ? 'checked' : ''} 
-            onchange="chatManager.setDefaultBot('${bot.id}')" 
-            class="default-radio"
-            data-testid="default-radio-${bot.id}"
-          >
-          <span class="radio-text">Por defecto</span>
-        </label>
+        <button 
+          class="set-default-btn" 
+          onclick="chatManager.setDefaultBot('${bot.id}')"
+          data-testid="set-default-button-${bot.id}"
+          ${bot.isDefault ? 'style="display: none;"' : ''}
+        >
+          ⭐
+        </button>
         <button 
           class="delete-bot" 
           onclick="chatManager.deleteBot(${index})"
           data-testid="delete-button-${bot.id}"
         >
-          Eliminar
+          🗑️
         </button>
       </div>
     `
@@ -431,22 +433,16 @@ describe('DOM Integration Tests', () => {
             expect(mariaItem).toHaveTextContent('Avatar: Personalizado')
         })
 
-        it('should show default radio button checked for default bot', () => {
-            const mariaRadio = document.querySelector(
-                '[data-testid="default-radio-maria-financiera"]'
-            )
-            const juanRadio = document.querySelector('[data-testid="default-radio-juan-inversion"]')
+        it('should show default badge for default bot', () => {
+            const mariaItem = document.querySelector('[data-testid="bot-item-maria-financiera"]')
+            const juanItem = document.querySelector('[data-testid="bot-item-juan-inversion"]')
 
-            expect(mariaRadio).toBeChecked()
-            expect(juanRadio).not.toBeChecked()
+            expect(mariaItem).toHaveTextContent('POR DEFECTO')
+            expect(juanItem).not.toHaveTextContent('POR DEFECTO')
         })
 
-        it('should change default bot when radio button is selected', () => {
-            const _juanRadio = document.querySelector(
-                '[data-testid="default-radio-juan-inversion"]'
-            )
-
-            // Simulate radio button change
+        it('should change default bot when star button is clicked', () => {
+            // Simulate star button click
             manager.setDefaultBot('juan-inversion')
 
             expect(manager.bots[0].isDefault).toBe(false) // María
@@ -458,7 +454,6 @@ describe('DOM Integration Tests', () => {
             expect(deleteButtons).toHaveLength(3)
 
             deleteButtons.forEach(button => {
-                expect(button).toHaveTextContent('Eliminar')
                 expect(button).toHaveClass('delete-bot')
             })
         })

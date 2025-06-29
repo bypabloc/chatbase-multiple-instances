@@ -1536,21 +1536,26 @@ class ChatbaseManager {
     createBotListItem(bot, index) {
         const botItem = document.createElement('div')
         botItem.id = `bot-list-item-${bot.id}`
-        botItem.className =
-            'bg-white border border-gray-100 rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200'
+
+        // Apply different styles for default bot
+        const borderClass = bot.isDefault
+            ? 'border-2 border-brand-blue bg-blue-50'
+            : 'border border-gray-100 bg-white'
+
+        botItem.className = `${borderClass} rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 relative`
+
         botItem.innerHTML = `
+            ${bot.isDefault ? `<div class="absolute top-2 right-2 bg-brand-blue text-white text-xs px-2 py-1 rounded-full font-semibold" id="default-badge-${bot.id}">POR DEFECTO</div>` : ''}
             <div class="flex-1" id="bot-info-${bot.id}">
                 <div class="font-semibold text-slate-800 mb-1" id="bot-name-display-${bot.id}">${bot.name}</div>
                 <div class="text-xs text-slate-500 font-mono" id="bot-id-display-${bot.id}">ID: ${bot.chatbaseId}</div>
                 ${bot.avatar ? `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Personalizado</div>` : `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Iniciales</div>`}
             </div>
             <div class="flex items-center gap-4" id="bot-actions-${bot.id}">
-                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500" id="default-radio-label-${bot.id}">
-                    <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
-                           onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer" id="default-radio-${bot.id}">
-                    <span class="select-none" id="default-text-${bot.id}">Por defecto</span>
-                </label>
-                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center gap-1" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}">
+                <button class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-brand-blue-dark flex items-center justify-center" onclick="chatManager.setDefaultBot('${bot.id}')" id="set-default-btn-${bot.id}" ${bot.isDefault ? 'style="display: none;"' : ''}>
+                    <div class="i-heroicons-star w-3 h-3" id="set-default-icon-${bot.id}"></div>
+                </button>
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center justify-center" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}">
                     <div class="i-heroicons-trash w-3 h-3" id="delete-bot-icon-${bot.id}"></div>
                 </button>
             </div>

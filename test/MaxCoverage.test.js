@@ -316,7 +316,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             const item = chatManager.createBotListItem(bot, 0)
 
             expect(item.innerHTML).toContain('Avatar: Personalizado')
-            expect(item.innerHTML).toContain('checked')
+            expect(item.innerHTML).toContain('POR DEFECTO')
         })
 
         it('should cover renderBotList', () => {
