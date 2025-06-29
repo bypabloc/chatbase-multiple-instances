@@ -9,6 +9,38 @@ import {
 import presetWind4 from '@unocss/preset-wind4'
 
 export default defineConfig({
+    safelist: [
+        // Dynamic avatar classes used in JavaScript
+        'w-10',
+        'h-10',
+        'w-32',
+        'h-32',
+        'text-sm',
+        'text-4xl',
+        'rounded-full',
+        'bg-brand-blue',
+        'bg-brand-blue-dark',
+        'bg-brand-green',
+        'bg-brand-orange',
+        'bg-brand-orange-dark',
+        'text-white',
+        'flex',
+        'items-center',
+        'justify-center',
+        'font-bold',
+        'uppercase',
+        'object-cover',
+        'bg-gray-200',
+        'mx-auto',
+        'mb-5',
+        // Button state classes
+        'bg-gray-500',
+        'cursor-not-allowed',
+        'hover:bg-green-700',
+        'hover:bg-brand-orange-dark',
+        'hover:scale-105',
+        'active:scale-95',
+    ],
     presets: [
         presetWind4({
             preflights: {

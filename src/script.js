@@ -204,8 +204,8 @@ class ChatbaseManager {
             'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5'
 
         card.innerHTML = `
-            <div class="w-30 h-30 mx-auto mb-5">
-                <div id="avatar-${bot.id}" class="w-30 h-30 rounded-full bg-brand-blue text-white flex items-center justify-center text-4xl font-bold uppercase">${this.getInitials(bot.name)}</div>
+            <div class="w-10 h-10 mx-auto mb-5">
+                <div id="avatar-${bot.id}" class="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-sm font-bold uppercase">${this.getInitials(bot.name)}</div>
             </div>
             <h3 class="text-3xl font-bold text-slate-800 mb-2.5">${bot.name}</h3>
             <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12">${bot.description}</p>
@@ -228,7 +228,7 @@ class ChatbaseManager {
         img.onload = () => {
             const avatarDiv = document.getElementById(`avatar-${bot.id}`)
             if (avatarDiv) {
-                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="w-30 h-30 rounded-full object-cover bg-gray-200">`
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="w-10 h-10 rounded-full object-cover bg-gray-200">`
             }
         }
         img.onerror = () => {
