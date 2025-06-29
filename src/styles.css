@@ -113,4 +113,22 @@
     .dark .hover\:shadow-\[0_10px_30px_rgba\(0\,0\,0\,0\.1\)\]:hover {
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
     }
+
+    /* Theme switch specific dark mode styles */
+    .dark #themeSwitch {
+        background-color: #374151 !important;
+    }
+
+    .dark #themeSwitch button {
+        color: #94a3b8 !important;
+    }
+
+    .dark #themeSwitch button:hover {
+        color: #f1f5f9 !important;
+    }
+
+    .dark #themeSwitch button.bg-white {
+        background-color: #1e293b !important;
+        color: #f1f5f9 !important;
+    }
 }

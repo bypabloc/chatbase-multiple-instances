@@ -1389,7 +1389,6 @@ class ChatbaseManager {
                 </label>
                 <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center gap-1" onclick="chatManager.deleteBot(${index})">
                     <div class="i-heroicons-trash w-3 h-3"></div>
-                    Eliminar
                 </button>
             </div>
         `

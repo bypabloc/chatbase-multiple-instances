@@ -83,6 +83,9 @@ export default defineConfig({
         'i-heroicons-sun',
         'i-heroicons-moon',
         'i-heroicons-computer-desktop',
+        'i-heroicons-trash',
+        'i-heroicons-arrow-down-tray',
+        'i-heroicons-exclamation-triangle',
         // Card layout classes
         'flex-col',
         'min-h-[320px]',
