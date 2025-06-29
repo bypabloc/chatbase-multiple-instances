@@ -433,7 +433,7 @@ describe('High Coverage Tests - Missing Functions', () => {
 
             const item = chatManager.createBotListItem(bot, 0)
 
-            expect(item.className).toContain('bg-blue-50')
+            expect(item.className).toContain('bg-slate-50')
             expect(item.innerHTML).toContain('Test Bot')
             expect(item.innerHTML).toContain('Avatar: Personalizado')
             expect(item.innerHTML).toContain('POR DEFECTO')

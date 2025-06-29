@@ -223,7 +223,7 @@ const mockChatbaseManagerClass = class ChatbaseManager {
 
         // Apply different styles for default bot
         const borderClass = bot.isDefault
-            ? 'border-2 border-brand-blue bg-blue-50'
+            ? 'border-2 border-brand-blue bg-slate-50'
             : 'border border-gray-100 bg-white'
 
         botItem.className += ` ${borderClass}`

@@ -448,6 +448,7 @@ class ChatbaseManager {
         })
         this.saveBots()
         this.updateFloatingChatButton()
+        this.renderBotList() // Re-renderizar la lista para mostrar el cambio visual inmediatamente
     }
 
     /**
@@ -1583,11 +1584,13 @@ class ChatbaseManager {
         botItem.id = `bot-list-item-${bot.id}`
 
         // Apply different styles for default bot
-        const borderClass = bot.isDefault
-            ? 'border-2 border-brand-blue bg-blue-50'
-            : 'border border-gray-100 bg-white'
+        const borderClass = bot.isDefault ? 'border-2 border-brand-blue' : 'border border-gray-100'
 
-        botItem.className = `${borderClass} rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 relative`
+        const backgroundClass = bot.isDefault
+            ? 'bg-slate-50' // Color más sutil usando slate
+            : 'bg-white'
+
+        botItem.className = `${borderClass} ${backgroundClass} rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 relative`
 
         botItem.innerHTML = `
             ${bot.isDefault ? `<div class="absolute top-2 right-2 bg-brand-blue text-white text-xs px-2 py-1 rounded-full font-semibold" id="default-badge-${bot.id}">POR DEFECTO</div>` : ''}
