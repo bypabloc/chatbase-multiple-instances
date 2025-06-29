@@ -87,7 +87,7 @@ describe('High Coverage Tests - Missing Functions', () => {
 
             expect(closeBtn.style.background).toBe('rgb(37, 99, 235)')
             expect(closeBtn.style.borderRadius).toBe('50%')
-            expect(closeBtn.innerHTML).toContain('svg')
+            expect(closeBtn.innerHTML).toContain('i-heroicons-chevron-down')
         })
 
         it('should setup close button events properly', () => {

@@ -376,11 +376,7 @@ class ChatbaseManager {
         floatingButton.className =
             'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
-        floatingButton.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `
+        floatingButton.innerHTML = `<div class="i-heroicons-chat-bubble-left-ellipsis w-6 h-6"></div>`
 
         floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
         document.body.appendChild(floatingButton)
@@ -656,11 +652,7 @@ class ChatbaseManager {
      */
     createCloseButton(botId) {
         const closeBtn = document.createElement('button')
-        closeBtn.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `
+        closeBtn.innerHTML = `<div class="i-heroicons-chevron-down w-6 h-6"></div>`
         closeBtn.style.cssText = STYLES.CLOSE_BUTTON
 
         this.setupCloseButtonEvents(closeBtn, botId)

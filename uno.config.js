@@ -72,6 +72,14 @@ export default defineConfig({
         'cursor-not-allowed',
         'disabled:bg-gray-400',
         'disabled:cursor-not-allowed',
+        // UnoCSS Icons
+        'i-mdi-github',
+        'i-heroicons-chat-bubble-left-ellipsis',
+        'i-heroicons-chevron-down',
+        'i-heroicons-star',
+        'i-heroicons-heart',
+        'i-heroicons-cog-6-tooth',
+        'i-heroicons-x-mark',
     ],
     presets: [
         presetWind4({
