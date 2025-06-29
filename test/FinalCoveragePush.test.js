@@ -5,6 +5,19 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock logger
+vi.mock('../src/logger.js', () => ({
+    default: {
+        log: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+        getEnvironment: vi.fn().mockReturnValue('test'),
+        isDevelopment: true,
+    },
+}))
+
 // Mock @vercel/analytics
 vi.mock('@vercel/analytics', () => ({
     inject: vi.fn(),
@@ -58,7 +71,7 @@ describe('Final Coverage Push - Last Lines', () => {
     })
 
     describe('ClearAllBots Function - Lines 916-932', () => {
-        it('should clear all bots with confirmation', () => {
+        it('should clear all bots with confirmation', async () => {
             // Setup some bots
             chatManager.bots = [
                 {
@@ -102,8 +115,11 @@ describe('Final Coverage Push - Last Lines', () => {
             // Verify storage was updated
             expect(localStorage.setItem).toHaveBeenCalledWith('chatbaseBots', JSON.stringify([]))
 
-            // Verify console log
-            expect(console.log).toHaveBeenCalledWith('All bots deleted')
+            // Import logger to verify log calls
+            const logger = await import('../src/logger.js')
+
+            // Verify logger.log was called
+            expect(logger.default.log).toHaveBeenCalledWith('All bots deleted')
 
             // Verify chat instances were cleaned up
             expect(Object.keys(chatManager.chatInstances)).toHaveLength(0)
@@ -139,7 +155,7 @@ describe('Final Coverage Push - Last Lines', () => {
             expect(chatManager.bots).toHaveLength(initialBotCount)
         })
 
-        it('should handle errors during clear all bots', () => {
+        it('should handle errors during clear all bots', async () => {
             // Setup bots
             chatManager.bots = [{ id: 'test', name: 'Test' }]
 
@@ -155,8 +171,14 @@ describe('Final Coverage Push - Last Lines', () => {
             // Call clearAllBots
             chatManager.clearAllBots()
 
-            // Verify error was logged (line 930)
-            expect(console.error).toHaveBeenCalledWith('Error deleting bots:', expect.any(Error))
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
+            // Verify error was logged (line 930) - error message changed to 'Error cleaning up instances:'
+            expect(logger.default.error).toHaveBeenCalledWith(
+                'Error cleaning up instances:',
+                expect.any(Error)
+            )
 
             // Restore original function
             chatManager.saveBots = originalSaveBots
@@ -264,16 +286,19 @@ describe('Final Coverage Push - Last Lines', () => {
             expect(result3).toBe(true)
         })
 
-        it('should cover all remaining edge cases', () => {
+        it('should cover all remaining edge cases', async () => {
             // Ensure all helper functions are covered
             expect(typeof chatManager.getInitials('John Doe')).toBe('string')
             expect(chatManager.getInitials('John Doe')).toBe('JD')
 
             expect(typeof chatManager.isMobile()).toBe('boolean')
 
+            // Import logger to test debug function
+            const logger = await import('../src/logger.js')
+
             // Test debug function
             chatManager.debugChatInstances()
-            expect(console.log).toHaveBeenCalledWith('=== Chat Instances Debug ===')
+            expect(logger.default.log).toHaveBeenCalledWith('=== Chat Instances Debug ===')
         })
     })
 })

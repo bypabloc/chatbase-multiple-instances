@@ -4,6 +4,19 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock logger
+vi.mock('../src/logger.js', () => ({
+    default: {
+        log: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+        getEnvironment: vi.fn().mockReturnValue('test'),
+        isDevelopment: true,
+    },
+}))
+
 // Mock @vercel/analytics
 vi.mock('@vercel/analytics', () => ({
     inject: vi.fn(),
@@ -54,7 +67,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
     })
 
     describe('Specific Uncovered Code Paths', () => {
-        it('should cover loadBots error path', () => {
+        it('should cover loadBots error path', async () => {
             // Mock localStorage to throw error
             localStorage.getItem.mockImplementation(() => {
                 throw new Error('Storage error')
@@ -62,7 +75,13 @@ describe('Maximum Coverage Tests - 95% Target', () => {
 
             chatManager.loadBots()
 
-            expect(console.error).toHaveBeenCalledWith('Error loading bots:', expect.any(Error))
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
+            expect(logger.default.error).toHaveBeenCalledWith(
+                'Error loading bots:',
+                expect.any(Error)
+            )
             expect(chatManager.bots).toEqual([])
         })
 
@@ -130,12 +149,17 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             expect(chatManager.currentBotId).toBe('test-bot')
         })
 
-        it('should cover openChatbase with transition check', () => {
+        it('should cover openChatbase with transition check', async () => {
             chatManager.isTransitioning = true
 
             chatManager.openChatbase('TEST123', 'test-bot')
 
-            expect(console.log).toHaveBeenCalledWith('Transition in progress, ignoring click')
+            // Import logger to verify log calls
+            const logger = await import('../src/logger.js')
+
+            expect(logger.default.log).toHaveBeenCalledWith(
+                'Transition in progress, ignoring click'
+            )
         })
 
         it('should cover updateButtonState with different states', () => {
@@ -168,10 +192,13 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             expect(button.textContent).toContain('HABLAR CON')
         })
 
-        it('should cover updateButtonState error cases', () => {
+        it('should cover updateButtonState error cases', async () => {
             // No button found
             chatManager.updateButtonState('non-existent', 'active')
-            expect(console.error).toHaveBeenCalledWith(
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
+            expect(logger.default.error).toHaveBeenCalledWith(
                 'Button or bot not found. Button: false, Bot: false'
             )
 
@@ -181,7 +208,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             document.body.appendChild(button)
 
             chatManager.updateButtonState('no-bot', 'active')
-            expect(console.error).toHaveBeenCalledWith(
+            expect(logger.default.error).toHaveBeenCalledWith(
                 'Button or bot not found. Button: true, Bot: false'
             )
         })
@@ -194,19 +221,32 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             expect(chatManager.chatInstances['test-bot'].chatbotId).toBe('TEST123')
         })
 
-        it('should cover minimizeChatInstance error case', () => {
+        it('should cover minimizeChatInstance error case', async () => {
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
             chatManager.minimizeChatInstance('non-existent')
 
-            expect(console.error).toHaveBeenCalledWith('No instance found for bot: non-existent')
+            expect(logger.default.error).toHaveBeenCalledWith(
+                'No instance found for bot: non-existent'
+            )
         })
 
-        it('should cover restoreChatInstance error case', () => {
+        it('should cover restoreChatInstance error case', async () => {
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
             chatManager.restoreChatInstance('non-existent')
 
-            expect(console.error).toHaveBeenCalledWith('No instance found for bot: non-existent')
+            expect(logger.default.error).toHaveBeenCalledWith(
+                'No instance found for bot: non-existent'
+            )
         })
 
-        it('should cover validateInstanceContainer with invalid container', () => {
+        it('should cover validateInstanceContainer with invalid container', async () => {
+            // Import logger to verify error calls
+            const logger = await import('../src/logger.js')
+
             const instance = {
                 container: null,
             }
@@ -214,12 +254,15 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             const result = chatManager.validateInstanceContainer(instance, 'test-bot')
 
             expect(result).toBe(false)
-            expect(console.error).toHaveBeenCalledWith(
-                'Container for bot test-bot not found in DOM during minimize'
+            expect(logger.default.error).toHaveBeenCalledWith(
+                'Container for bot not found in DOM during minimize'
             )
         })
 
-        it('should cover minimizeOtherInstances', () => {
+        it('should cover minimizeOtherInstances', async () => {
+            // Import logger to verify log calls
+            const logger = await import('../src/logger.js')
+
             // Create other visible instance
             chatManager.chatInstances['other-bot'] = {
                 isVisible: true,
@@ -229,7 +272,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
 
             chatManager.minimizeOtherInstances('test-bot')
 
-            expect(console.log).toHaveBeenCalledWith(
+            expect(logger.default.log).toHaveBeenCalledWith(
                 'Minimizing previous visible instance: other-bot'
             )
         })
@@ -391,7 +434,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             expect(chatManager.currentBotId).toBe('test-bot')
         })
 
-        it('should cover all remaining edge cases', () => {
+        it('should cover all remaining edge cases', async () => {
             // Cover remaining function calls
             expect(chatManager.isMobile()).toBeDefined()
             expect(chatManager.getInitials('Test Name')).toBe('TN')
@@ -401,9 +444,12 @@ describe('Maximum Coverage Tests - 95% Target', () => {
             chatManager.setupEventListeners()
             expect(spy).toHaveBeenCalled()
 
+            // Import logger to cover debug function
+            const logger = await import('../src/logger.js')
+
             // Cover debug function
             chatManager.debugChatInstances()
-            expect(console.log).toHaveBeenCalledWith('=== Chat Instances Debug ===')
+            expect(logger.default.log).toHaveBeenCalledWith('=== Chat Instances Debug ===')
         })
     })
 })

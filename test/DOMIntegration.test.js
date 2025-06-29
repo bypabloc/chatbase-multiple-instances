@@ -222,9 +222,11 @@ const mockChatbaseManagerClass = class ChatbaseManager {
         botItem.setAttribute('data-testid', `bot-item-${bot.id}`)
 
         // Apply different styles for default bot
-        const borderClass = bot.isDefault 
-            ? 'border-2 border-brand-blue bg-blue-50' 
+        const borderClass = bot.isDefault
+            ? 'border-2 border-brand-blue bg-blue-50'
             : 'border border-gray-100 bg-white'
+
+        botItem.className += ` ${borderClass}`
 
         botItem.innerHTML = `
       ${bot.isDefault ? '<div class="default-badge">POR DEFECTO</div>' : ''}

@@ -1215,7 +1215,7 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     showInstance(instance, _botId) {
-        logger.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
+        logger.log(`Restoring bot ${_botId}, display before:`, instance.container.style.display)
 
         // Disable mobile scroll when chat instance is shown/restored
         this.disableMobileScroll()

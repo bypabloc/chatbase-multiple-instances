@@ -46,6 +46,16 @@
                     }
                 }
             }
+        },
+        {
+            "includes": ["test/**/*.js"],
+            "linter": {
+                "rules": {
+                    "suspicious": {
+                        "noConsole": "off"
+                    }
+                }
+            }
         }
     ],
     "javascript": {

@@ -4,6 +4,19 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+// Mock logger
+vi.mock('../src/logger.js', () => ({
+    default: {
+        log: vi.fn(),
+        error: vi.fn(),
+        warn: vi.fn(),
+        info: vi.fn(),
+        debug: vi.fn(),
+        getEnvironment: vi.fn().mockReturnValue('test'),
+        isDevelopment: true,
+    },
+}))
+
 // Mock @vercel/analytics before importing script.js
 vi.mock('@vercel/analytics', () => ({
     inject: vi.fn(),
@@ -448,12 +461,12 @@ describe('High Coverage Tests - Missing Functions', () => {
             expect(addEventListenerSpy).toHaveBeenCalledWith('beforeunload', expect.any(Function))
         })
 
-        it('should test debug function', () => {
-            const consoleSpy = vi.spyOn(console, 'log')
+        it('should test debug function', async () => {
+            const logger = await import('../src/logger.js')
 
             chatManager.debugChatInstances()
 
-            expect(consoleSpy).toHaveBeenCalledWith('=== Chat Instances Debug ===')
+            expect(logger.default.log).toHaveBeenCalledWith('=== Chat Instances Debug ===')
         })
 
         it('should handle window resize', async () => {
