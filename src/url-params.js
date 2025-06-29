@@ -200,11 +200,11 @@ logger.log(
 )
 
 // Function to wait for chatManager to be ready
-function waitForChatManager(maxWaitTime = 5000) {
+const waitForChatManager = (maxWaitTime = 5000) => {
     return new Promise((resolve, reject) => {
         const startTime = Date.now()
 
-        function checkChatManager() {
+        const checkChatManager = () => {
             if (window.chatManager) {
                 logger.log('URL Params Manager - ChatManager found')
                 resolve()
@@ -222,7 +222,7 @@ function waitForChatManager(maxWaitTime = 5000) {
 }
 
 // Function to load bots from parameters
-async function loadBotsFromParamsAsync() {
+const loadBotsFromParamsAsync = async () => {
     try {
         logger.log('URL Params Manager - Waiting for chatManager...')
         await waitForChatManager()
