@@ -2,7 +2,7 @@
  * Final tests to push coverage to 95%+ by targeting specific uncovered lines
  */
 
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock logger
 vi.mock('../src/logger.js', () => ({

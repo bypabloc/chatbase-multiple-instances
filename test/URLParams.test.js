@@ -3,8 +3,8 @@
  * Tests all URLParamsManager class methods and global functions
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { JSDOM } from 'jsdom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock logger before importing url-params.js
 vi.mock('../src/logger.js', () => ({
@@ -1090,6 +1090,159 @@ describe('URLParamsManager', () => {
 
                 expect(result.id).toBe('机器人-maría-josé-müller-ñáéíóú')
                 expect(result.name).toBe('机器人 María José Müller ñáéíóú')
+            })
+        })
+
+        describe('Additional Branch Coverage Tests', () => {
+            it('should test all branches in getCookieParams', () => {
+                // Test with valid cookie containing target name
+                const testParams = { bot_1: 'ABC123' }
+                const cookieValue = encodeURIComponent(JSON.stringify(testParams))
+                mockDocument.cookie = `${manager.cookieName}=${cookieValue}; other=value`
+
+                const params1 = manager.getCookieParams()
+                expect(params1).toEqual(testParams)
+
+                // Test with malformed JSON
+                mockDocument.cookie = `${manager.cookieName}=invalid-json; other=value`
+                const params2 = manager.getCookieParams()
+                expect(params2).toEqual({})
+
+                // Test with no matching cookie
+                mockDocument.cookie = 'other=value; different=cookie'
+                const params3 = manager.getCookieParams()
+                expect(params3).toEqual({})
+            })
+
+            it('should test all branches in parseBotParameter', () => {
+                // Test with complete JSON config
+                const fullConfig = {
+                    id: 'test-id',
+                    name: 'Test Bot',
+                    description: 'Test Description',
+                    avatarUrl: 'https://example.com/avatar.jpg',
+                    isDefault: true,
+                }
+                const result1 = manager.parseBotParameter(JSON.stringify(fullConfig))
+                expect(result1.id).toBe('test-bot')
+                expect(result1.avatar).toBe('https://example.com/avatar.jpg')
+                expect(result1.isDefault).toBe(true)
+
+                // Test with chatbaseId instead of id
+                const configWithChatbaseId = {
+                    chatbaseId: 'chatbase-123',
+                    name: 'Chatbase Bot',
+                }
+                const result2 = manager.parseBotParameter(JSON.stringify(configWithChatbaseId))
+                expect(result2.chatbaseId).toBe('chatbase-123')
+
+                // Test with avatar field instead of avatarUrl
+                const configWithAvatar = {
+                    chatbaseId: 'avatar-test',
+                    avatar: 'https://example.com/alt-avatar.jpg',
+                }
+                const result3 = manager.parseBotParameter(JSON.stringify(configWithAvatar))
+                expect(result3.avatar).toBe('https://example.com/alt-avatar.jpg')
+
+                // Test with neither id nor chatbaseId (should return null)
+                const invalidConfig = { name: 'Invalid Bot' }
+                const result4 = manager.parseBotParameter(JSON.stringify(invalidConfig))
+                expect(result4).toBeNull()
+
+                // Test non-string input
+                const result5 = manager.parseBotParameter(123)
+                expect(result5).toBeNull()
+
+                // Test empty string
+                const result6 = manager.parseBotParameter('')
+                expect(result6).toBeNull()
+            })
+
+            it('should test all branches in processQueryParams', () => {
+                // Test with mix of bot and non-bot parameters
+                const queryParams = new URLSearchParams(
+                    'bot_1=test1&other=value&bot_2=test2&normal=param'
+                )
+                const paramsToSave = {}
+
+                const bots = manager.processQueryParams(queryParams, paramsToSave)
+                expect(bots).toHaveLength(2)
+                expect(paramsToSave).toEqual({ bot_1: 'test1', bot_2: 'test2' })
+
+                // Test with already processed parameters
+                manager.processedParams.add('bot_1')
+                const queryParams2 = new URLSearchParams('bot_1=test1&bot_3=test3')
+                const paramsToSave2 = {}
+                const bots2 = manager.processQueryParams(queryParams2, paramsToSave2)
+                expect(bots2).toHaveLength(1)
+                expect(paramsToSave2).toEqual({ bot_3: 'test3' })
+
+                // Test with invalid bot parameter
+                const queryParams3 = new URLSearchParams('bot_invalid=')
+                const paramsToSave3 = {}
+                const bots3 = manager.processQueryParams(queryParams3, paramsToSave3)
+                expect(bots3).toHaveLength(0)
+                expect(paramsToSave3).toEqual({})
+            })
+
+            it('should test all branches in processCookieParams', () => {
+                const cookieParams = {
+                    bot_1: 'cookie1',
+                    bot_2: 'cookie2',
+                    other: 'value',
+                }
+
+                // Test with query param taking precedence
+                const queryParams = new URLSearchParams('bot_1=query1')
+                const existingBots = []
+                const bots1 = manager.processCookieParams(cookieParams, queryParams, existingBots)
+                expect(bots1).toHaveLength(1) // Only bot_2 should be processed
+                expect(bots1[0].chatbaseId).toBe('cookie2')
+
+                // Test with existing bot preventing addition
+                const existingBots2 = [{ id: 'bot-cookie2', name: 'Existing' }]
+                const bots2 = manager.processCookieParams(
+                    cookieParams,
+                    new URLSearchParams(),
+                    existingBots2
+                )
+                expect(bots2).toHaveLength(1) // Only bot_1 should be processed
+                expect(bots2[0].chatbaseId).toBe('cookie1')
+            })
+
+            it('should test branches in cleanURLParams', () => {
+                // Test with parameters present
+                mockWindow.location.search = '?bot_1=test&other=value'
+                manager.cleanURLParams()
+                expect(mockWindow.history.replaceState).toHaveBeenCalled()
+
+                // Test with no parameters
+                mockWindow.location.search = ''
+                mockWindow.history.replaceState.mockClear()
+                manager.cleanURLParams()
+                expect(mockWindow.history.replaceState).not.toHaveBeenCalled()
+            })
+
+            it('should test saveToCookie method indirectly through setCookie', () => {
+                const testData = { test: 'value' }
+                manager.saveToCookie(testData)
+                expect(mockDocument.cookie).toContain('chatbase_query_params')
+                expect(mockDocument.cookie).toContain('max-age=604800')
+            })
+
+            it('should test complex parameter merging in loadBotsFromParams', () => {
+                // Setup both query and cookie parameters
+                mockWindow.location.search = '?bot_1=query-bot'
+                const cookieParams = { bot_2: 'cookie-bot' }
+                const cookieValue = encodeURIComponent(JSON.stringify(cookieParams))
+                mockDocument.cookie = `${manager.cookieName}=${cookieValue}`
+
+                const bots = manager.loadBotsFromParams()
+                expect(bots).toHaveLength(2)
+
+                // Verify cookie merge happened
+                expect(mockDocument.cookie).toContain('bot_1')
+                expect(mockDocument.cookie).toContain('bot_2')
             })
         })
     })
