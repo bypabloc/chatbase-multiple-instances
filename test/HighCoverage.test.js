@@ -436,7 +436,7 @@ describe('High Coverage Tests - Missing Functions', () => {
             expect(item.className).toContain('bg-slate-50')
             expect(item.innerHTML).toContain('Test Bot')
             expect(item.innerHTML).toContain('Avatar: Personalizado')
-            expect(item.innerHTML).toContain('POR DEFECTO')
+            expect(item.innerHTML).toContain('i-heroicons-check-circle')
         })
     })
 
