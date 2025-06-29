@@ -461,5 +461,37 @@ describe('High Coverage Tests - Missing Functions', () => {
 
             expect(mockContainer.style.cssText).toBeDefined()
         })
+
+        it('should disable mobile scroll when chat opens', () => {
+            // Mock mobile detection
+            chatManager.isMobile = vi.fn().mockReturnValue(true)
+
+            chatManager.disableMobileScroll()
+
+            expect(document.body.style.overflow).toBe('hidden')
+            expect(document.body.style.position).toBe('fixed')
+        })
+
+        it('should enable mobile scroll when chat closes', () => {
+            // Mock mobile detection
+            chatManager.isMobile = vi.fn().mockReturnValue(true)
+
+            // First disable, then enable
+            chatManager.disableMobileScroll()
+            chatManager.enableMobileScroll()
+
+            expect(document.body.style.overflow).toBe('')
+            expect(document.body.style.position).toBe('')
+        })
+
+        it('should not affect scroll on desktop', () => {
+            // Mock desktop detection
+            chatManager.isMobile = vi.fn().mockReturnValue(false)
+
+            chatManager.disableMobileScroll()
+
+            expect(document.body.style.overflow).toBe('')
+            expect(document.body.style.position).toBe('')
+        })
     })
 })

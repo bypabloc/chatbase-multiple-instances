@@ -22,15 +22,16 @@ const STYLES = {
         position: fixed;
         top: 0;
         bottom: 0;
-        left: 0;
         right: 0;
-        width: 100vw;
+        width: 100%;
         height: 100vh;
-        z-index: 9999;
+        max-width: 100vw;
+        z-index: 10000;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         background: transparent;
+        pointer-events: none;
     `,
     CHAT_CONTAINER_DESKTOP: `
         position: fixed;
@@ -58,6 +59,7 @@ const STYLES = {
         overflow: hidden;
         box-shadow: none;
         background: white;
+        pointer-events: auto;
     `,
     CLOSE_BUTTON: `
         margin-top: 10px;
@@ -75,6 +77,7 @@ const STYLES = {
         transition: all 0.3s ease;
         z-index: 10;
         padding: 0;
+        pointer-events: auto;
     `,
     IFRAME: `
         width: 100%;
@@ -142,6 +145,8 @@ class ChatbaseManager {
      * Update all active chat instances when screen size changes
      */
     updateChatInstancesForResize() {
+        let hasVisibleInstance = false
+
         Object.keys(this.chatInstances).forEach(botId => {
             const instance = this.chatInstances[botId]
             if (instance && instance.container) {
@@ -159,8 +164,20 @@ class ChatbaseManager {
                         ? STYLES.IFRAME_CONTAINER_MOBILE
                         : STYLES.IFRAME_CONTAINER
                 }
+
+                // Check if this instance is visible
+                if (instance.isVisible) {
+                    hasVisibleInstance = true
+                }
             }
         })
+
+        // Update mobile scroll based on visible instances
+        if (hasVisibleInstance) {
+            this.disableMobileScroll()
+        } else {
+            this.enableMobileScroll()
+        }
     }
 
     /**
@@ -229,6 +246,30 @@ class ChatbaseManager {
      */
     isMobile() {
         return window.innerWidth <= CONFIG.MOBILE_BREAKPOINT
+    }
+
+    /**
+     * Disable mobile scroll when chat is open
+     */
+    disableMobileScroll() {
+        if (this.isMobile()) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.position = 'fixed'
+            document.body.style.width = '100%'
+            document.body.style.top = '0'
+        }
+    }
+
+    /**
+     * Enable mobile scroll when chat is closed
+     */
+    enableMobileScroll() {
+        if (this.isMobile()) {
+            document.body.style.overflow = ''
+            document.body.style.position = ''
+            document.body.style.width = ''
+            document.body.style.top = ''
+        }
     }
 
     /**
@@ -517,6 +558,9 @@ class ChatbaseManager {
 
         document.body.appendChild(chatContainer)
 
+        // Disable mobile scroll when chat opens
+        this.disableMobileScroll()
+
         // Add outside click listener with delay
         setTimeout(() => {
             document.addEventListener('click', outsideClickHandler)
@@ -748,6 +792,9 @@ class ChatbaseManager {
         console.log(`Hiding container for bot ${botId}`)
         instance.container.style.display = 'none'
         instance.isVisible = false
+
+        // Enable mobile scroll when chat instance is hidden/minimized
+        this.enableMobileScroll()
     }
 
     /**
@@ -835,6 +882,10 @@ class ChatbaseManager {
      */
     showInstance(instance, botId) {
         console.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
+
+        // Disable mobile scroll when chat instance is shown/restored
+        this.disableMobileScroll()
+
         instance.container.style.display = 'flex'
         instance.container.style.visibility = 'visible'
         instance.isVisible = true
@@ -869,6 +920,9 @@ class ChatbaseManager {
         this.removeInstanceEventListeners(instance)
         this.removeInstanceElements(instance)
         this.cleanupWidgetElements(instance, botId)
+
+        // Enable mobile scroll when chat instance is completely destroyed
+        this.enableMobileScroll()
 
         delete this.chatInstances[botId]
         this.updateButtonState(botId, 'default')
@@ -935,6 +989,9 @@ class ChatbaseManager {
 
             this.cleanupOrphanedElements()
             this.cleanupGlobalProperties()
+
+            // Enable mobile scroll when all instances are cleaned up
+            this.enableMobileScroll()
 
             this.chatInstances = {}
             this.currentBotId = null
