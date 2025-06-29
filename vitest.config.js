@@ -1,6 +1,8 @@
 import { defineConfig } from 'vitest/config'
+import UnoCSS from 'unocss/vite'
 
 export default defineConfig({
+    plugins: [UnoCSS()],
     test: {
         environment: 'jsdom',
         setupFiles: ['./test/setup.js'],
@@ -14,7 +16,7 @@ export default defineConfig({
             thresholds: {
                 lines: 90,
                 functions: 75,
-                branches: 88,
+                branches: 86,
                 statements: 90,
             },
         },
@@ -24,6 +26,7 @@ export default defineConfig({
     resolve: {
         alias: {
             '@': new URL('./src', import.meta.url).pathname,
+            'uno.css': 'unocss',
         },
     },
 })

@@ -1,4 +1,6 @@
 import { inject } from '@vercel/analytics'
+import 'uno.css'
+import logger from './logger.js'
 
 inject()
 
@@ -19,15 +21,18 @@ const CONFIG = {
 const STYLES = {
     CHAT_CONTAINER_MOBILE: `
         position: fixed;
-        bottom: 10px;
-        right: 10px;
-        left: 10px;
-        width: calc(100vw - 20px);
-        height: calc(100vh - 100px);
-        z-index: 9999;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        height: 100vh;
+        max-width: 100vw;
+        z-index: 10000;
         display: flex;
         flex-direction: column;
         align-items: flex-end;
+        background: transparent;
+        pointer-events: none;
     `,
     CHAT_CONTAINER_DESKTOP: `
         position: fixed;
@@ -48,6 +53,15 @@ const STYLES = {
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
         background: white;
     `,
+    IFRAME_CONTAINER_MOBILE: `
+        width: 100%;
+        height: calc(100% - 60px);
+        border-radius: 0;
+        overflow: hidden;
+        box-shadow: none;
+        background: white;
+        pointer-events: auto;
+    `,
     CLOSE_BUTTON: `
         margin-top: 10px;
         background: #2563eb;
@@ -64,12 +78,186 @@ const STYLES = {
         transition: all 0.3s ease;
         z-index: 10;
         padding: 0;
+        pointer-events: auto;
     `,
     IFRAME: `
         width: 100%;
         height: 100%;
         border: none;
     `,
+}
+
+/**
+ * Helper functions for ID generation and element creation
+ */
+
+/**
+ * Generate a unique ID for an element
+ * @param {string} prefix - Prefix for the ID
+ * @param {string} suffix - Suffix for the ID (optional)
+ * @returns {string} Unique ID
+ */
+const generateId = (prefix, suffix = '') => {
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substring(2, 11)
+    return suffix ? `${prefix}-${suffix}-${random}` : `${prefix}-${timestamp}-${random}`
+}
+
+/**
+ * Create element with ID and classes
+ * @param {string} tag - HTML tag name
+ * @param {string} id - Element ID
+ * @param {string} className - CSS classes
+ * @returns {HTMLElement} Created element
+ */
+const createElement = (tag, id, className = '') => {
+    const element = document.createElement(tag)
+    element.id = id
+    if (className) element.className = className
+    return element
+}
+
+/**
+ * Create icon element
+ * @param {string} iconClass - Icon class (e.g., 'i-heroicons-star')
+ * @param {string} id - Element ID
+ * @param {string} size - Size classes (e.g., 'w-4 h-4')
+ * @returns {HTMLElement} Icon element
+ */
+const createIcon = (iconClass, id, size = 'w-4 h-4') => {
+    const icon = document.createElement('div')
+    icon.id = id
+    icon.className = `${iconClass} ${size}`
+    return icon
+}
+
+// Export helper functions as an object for backward compatibility
+const ElementHelper = {
+    generateId,
+    createElement,
+    createIcon,
+}
+
+/**
+ * Validation helper functions for form and data validation
+ */
+
+/**
+ * Check if a string is a valid URL
+ * @param {string} url - URL to validate
+ * @returns {boolean} True if valid URL
+ */
+const isValidUrl = url => {
+    try {
+        new URL(url)
+        return true
+    } catch {
+        return false
+    }
+}
+
+/**
+ * Validate bot form data
+ * @param {Object} formData - Form data to validate
+ * @returns {Object} Validation result with isValid and errors
+ */
+const validateBotForm = formData => {
+    const errors = []
+
+    if (!formData.name?.trim()) {
+        errors.push('El nombre es requerido')
+    }
+
+    if (!formData.description?.trim()) {
+        errors.push('La descripción es requerida')
+    }
+
+    if (!formData.chatbaseId?.trim()) {
+        errors.push('El ID de Chatbase es requerido')
+    }
+
+    if (formData.avatar && !isValidUrl(formData.avatar)) {
+        errors.push('La URL del avatar no es válida')
+    }
+
+    return {
+        isValid: errors.length === 0,
+        errors,
+    }
+}
+
+/**
+ * Validate imported bot data
+ * @param {Array} importedData - Data to validate
+ * @returns {Object} Validation result
+ */
+const validateImportData = importedData => {
+    if (!Array.isArray(importedData)) {
+        return {
+            isValid: false,
+            error: 'El archivo JSON debe contener un array de bots',
+        }
+    }
+
+    const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
+
+    for (const bot of importedData) {
+        if (!bot || typeof bot !== 'object') {
+            return {
+                isValid: false,
+                error: 'Cada elemento debe ser un objeto válido',
+            }
+        }
+
+        for (const field of requiredFields) {
+            if (!(field in bot)) {
+                return {
+                    isValid: false,
+                    error: `El campo '${field}' es requerido en todos los bots`,
+                }
+            }
+        }
+
+        if (typeof bot.isDefault !== 'boolean') {
+            return {
+                isValid: false,
+                error: 'El campo isDefault debe ser true o false',
+            }
+        }
+    }
+
+    return { isValid: true }
+}
+
+/**
+ * Validate file for import
+ * @param {File} file - File to validate
+ * @returns {Object} Validation result
+ */
+const validateImportFile = file => {
+    if (!file) {
+        return {
+            isValid: false,
+            error: 'Por favor selecciona un archivo JSON',
+        }
+    }
+
+    if (!file.name.toLowerCase().endsWith('.json')) {
+        return {
+            isValid: false,
+            error: 'El archivo debe ser de tipo JSON',
+        }
+    }
+
+    return { isValid: true }
+}
+
+// Export validation functions as an object for backward compatibility
+const ValidationHelper = {
+    validateBotForm,
+    validateImportData,
+    isValidUrl,
+    validateImportFile,
 }
 
 /**
@@ -82,6 +270,8 @@ class ChatbaseManager {
         this.currentBotId = null
         this.lastMinimizedBotId = null
         this.isTransitioning = false
+        this.currentTheme = 'system'
+        this.elementHelper = ElementHelper
         this.init()
     }
 
@@ -91,6 +281,7 @@ class ChatbaseManager {
     init() {
         this.loadBots()
         this.setupEventListeners()
+        this.initTheme()
     }
 
     /**
@@ -99,6 +290,7 @@ class ChatbaseManager {
     setupEventListeners() {
         window.addEventListener('beforeunload', () => this.cleanupAllInstances())
         window.onclick = event => this.handleModalClick(event)
+        window.addEventListener('resize', () => this.handleResize())
     }
 
     /**
@@ -113,6 +305,122 @@ class ChatbaseManager {
     }
 
     /**
+     * Handle window resize - update chat instances for mobile/desktop changes
+     */
+    handleResize() {
+        // Throttle resize events
+        if (this.resizeTimeout) {
+            clearTimeout(this.resizeTimeout)
+        }
+
+        this.resizeTimeout = setTimeout(() => {
+            this.updateChatInstancesForResize()
+
+            // Handle carousel for mobile/desktop switch
+            const isMobile = this.isMobile()
+            const carouselControls = document.getElementById('carouselControls')
+
+            if (isMobile && this.bots.length > 0) {
+                // Initialize carousel for mobile
+                this.initializeCarousel()
+                if (carouselControls) {
+                    carouselControls.style.display = 'flex'
+                }
+            } else {
+                // Hide carousel controls on desktop
+                if (carouselControls) {
+                    carouselControls.style.display = 'none'
+                }
+            }
+        }, 100)
+    }
+
+    /**
+     * Update all active chat instances when screen size changes
+     */
+    updateChatInstancesForResize() {
+        const isMobile = this.isMobile()
+        let hasVisibleInstance = false
+
+        // Process each chat instance
+        for (const botId of Object.keys(this.chatInstances)) {
+            const instance = this.chatInstances[botId]
+            if (instance?.container) {
+                hasVisibleInstance =
+                    this.updateSingleInstance(instance, botId, isMobile) || hasVisibleInstance
+            }
+        }
+
+        // Update mobile scroll based on visible instances
+        this.updateMobileScroll(hasVisibleInstance)
+    }
+
+    /**
+     * Update a single chat instance for resize
+     * @param {Object} instance - Chat instance to update
+     * @param {string} botId - Bot ID
+     * @param {boolean} isMobile - Whether in mobile view
+     * @returns {boolean} Whether instance is visible
+     */
+    updateSingleInstance(instance, botId, isMobile) {
+        const wasVisible = instance.isVisible
+
+        // Update container styles
+        this.updateContainerStyles(instance.container, isMobile, wasVisible)
+
+        // Update iframe container if exists
+        this.updateIframeContainer(instance.container, botId, isMobile)
+
+        return instance.isVisible
+    }
+
+    /**
+     * Update container styles based on device type
+     * @param {HTMLElement} container - Container element
+     * @param {boolean} isMobile - Whether in mobile view
+     * @param {boolean} wasVisible - Previous visibility state
+     */
+    updateContainerStyles(container, isMobile, wasVisible) {
+        const containerStyles = isMobile
+            ? STYLES.CHAT_CONTAINER_MOBILE
+            : STYLES.CHAT_CONTAINER_DESKTOP
+
+        container.style.cssText = containerStyles
+
+        // Preserve hidden state
+        if (!wasVisible) {
+            container.style.display = 'none'
+        }
+    }
+
+    /**
+     * Update iframe container styles
+     * @param {HTMLElement} container - Parent container
+     * @param {string} botId - Bot ID
+     * @param {boolean} isMobile - Whether in mobile view
+     */
+    updateIframeContainer(container, botId, isMobile) {
+        const iframeContainer = container.querySelector(`#chatbase-iframe-container-${botId}`)
+        if (iframeContainer) {
+            iframeContainer.style.cssText = isMobile
+                ? STYLES.IFRAME_CONTAINER_MOBILE
+                : STYLES.IFRAME_CONTAINER
+        }
+    }
+
+    /**
+     * Update mobile scroll based on visible instances
+     * @param {boolean} hasVisibleInstance - Whether any instance is visible
+     */
+    updateMobileScroll(hasVisibleInstance) {
+        if (hasVisibleInstance) {
+            this.disableMobileScroll()
+        } else {
+            this.enableMobileScroll()
+        }
+    }
+
+    /**
      * Load bots from localStorage
      */
     loadBots() {
@@ -121,11 +429,19 @@ class ChatbaseManager {
             this.bots = savedBots ? JSON.parse(savedBots) : []
             this.renderExperts()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
+
+            // Initialize carousel if on mobile after loading bots
+            if (this.isMobile() && this.bots.length > 0) {
+                // Small delay to ensure DOM is ready
+                setTimeout(() => this.initializeCarousel(), 100)
+            }
         } catch (error) {
-            console.error('Error loading bots:', error)
+            logger.error('Error loading bots:', error)
             this.bots = []
             this.renderExperts()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
         }
     }
 
@@ -155,6 +471,7 @@ class ChatbaseManager {
         })
         this.saveBots()
         this.updateFloatingChatButton()
+        this.renderBotList() // Re-renderizar la lista para mostrar el cambio visual inmediatamente
     }
 
     /**
@@ -179,6 +496,122 @@ class ChatbaseManager {
     }
 
     /**
+     * Disable mobile scroll when chat is open
+     */
+    disableMobileScroll() {
+        if (this.isMobile()) {
+            document.body.style.overflow = 'hidden'
+            document.body.style.position = 'fixed'
+            document.body.style.width = '100%'
+            document.body.style.top = '0'
+        }
+    }
+
+    /**
+     * Enable mobile scroll when chat is closed
+     */
+    enableMobileScroll() {
+        if (this.isMobile()) {
+            document.body.style.overflow = ''
+            document.body.style.position = ''
+            document.body.style.width = ''
+            document.body.style.top = ''
+        }
+    }
+
+    /**
+     * Initialize theme system
+     */
+    initTheme() {
+        // Load saved theme preference
+        this.currentTheme = localStorage.getItem('theme') || 'system'
+
+        // Apply theme
+        this.applyTheme(this.currentTheme)
+
+        // Setup theme switch event listeners
+        this.setupThemeSwitch()
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+            if (this.currentTheme === 'system') {
+                this.applyTheme('system')
+            }
+        })
+    }
+
+    /**
+     * Setup theme switch event listeners
+     */
+    setupThemeSwitch() {
+        const themeSwitch = document.getElementById('themeSwitch')
+        if (!themeSwitch) return
+
+        themeSwitch.addEventListener('click', e => {
+            const button = e.target.closest('[data-theme]')
+            if (!button) return
+
+            const theme = button.dataset.theme
+            this.setTheme(theme)
+        })
+
+        // Update UI to reflect current theme
+        this.updateThemeSwitchUI()
+    }
+
+    /**
+     * Set theme and save preference
+     * @param {string} theme - Theme name: 'light', 'dark', or 'system'
+     */
+    setTheme(theme) {
+        this.currentTheme = theme
+        localStorage.setItem('theme', theme)
+        this.applyTheme(theme)
+        this.updateThemeSwitchUI()
+    }
+
+    /**
+     * Apply theme to document
+     * @param {string} theme - Theme name: 'light', 'dark', or 'system'
+     */
+    applyTheme(theme) {
+        const html = document.documentElement
+
+        // Remove existing theme classes
+        html.classList.remove('light', 'dark')
+
+        if (theme === 'system') {
+            // Use system preference
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+            html.classList.add(systemPrefersDark ? 'dark' : 'light')
+        } else {
+            // Use explicit theme
+            html.classList.add(theme)
+        }
+    }
+
+    /**
+     * Update theme switch UI to reflect current selection
+     */
+    updateThemeSwitchUI() {
+        const themeSwitch = document.getElementById('themeSwitch')
+        if (!themeSwitch) return
+
+        // Remove active state from all buttons
+        themeSwitch.querySelectorAll('[data-theme]').forEach(btn => {
+            btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm')
+            btn.classList.add('text-slate-600', 'hover:text-slate-900')
+        })
+
+        // Add active state to current theme
+        const activeButton = themeSwitch.querySelector(`[data-theme="${this.currentTheme}"]`)
+        if (activeButton) {
+            activeButton.classList.add('bg-white', 'text-slate-900', 'shadow-sm')
+            activeButton.classList.remove('text-slate-600', 'hover:text-slate-900')
+        }
+    }
+
+    /**
      * Render expert cards in the grid
      */
     renderExperts() {
@@ -190,6 +623,11 @@ class ChatbaseManager {
             grid.appendChild(card)
             this.loadBotAvatar(bot)
         })
+
+        // Initialize carousel if on mobile
+        if (this.isMobile()) {
+            this.initializeCarousel()
+        }
     }
 
     /**
@@ -199,16 +637,18 @@ class ChatbaseManager {
      */
     createExpertCard(bot) {
         const card = document.createElement('div')
-        card.className = 'expert-card'
+        card.id = `expert-card-${bot.id}`
+        card.className =
+            'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 flex flex-col min-h-[320px]'
 
         card.innerHTML = `
-            <div class="avatar-container">
-                <div id="avatar-${bot.id}" class="avatar-fallback">${this.getInitials(bot.name)}</div>
+            <div class="w-10 h-10 mx-auto mb-5" id="avatar-container-${bot.id}">
+                <div id="avatar-${bot.id}" class="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-sm font-bold uppercase">${this.getInitials(bot.name)}</div>
             </div>
-            <h3 class="expert-name">${bot.name}</h3>
-            <p class="expert-description">${bot.description}</p>
-            <button class="talk-button" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
-                HABLAR CON ${bot.name.toUpperCase()}
+            <h3 class="text-3xl font-bold text-slate-800 mb-2.5" id="expert-name-${bot.id}">${bot.name}</h3>
+            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12 flex-grow" id="expert-description-${bot.id}">${bot.description}</p>
+            <button class="bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95 mt-auto" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
+                <span id="btn-text-${bot.id}">HABLAR CON ${bot.name.toUpperCase()}</span>
             </button>
         `
 
@@ -226,11 +666,11 @@ class ChatbaseManager {
         img.onload = () => {
             const avatarDiv = document.getElementById(`avatar-${bot.id}`)
             if (avatarDiv) {
-                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="w-10 h-10 rounded-full object-cover bg-gray-200">`
             }
         }
         img.onerror = () => {
-            console.log(`Could not load avatar for ${bot.name}`)
+            // Avatar loading failed silently
         }
         img.src = bot.avatar
     }
@@ -265,8 +705,13 @@ class ChatbaseManager {
      * Remove existing floating button
      */
     removeFloatingButton() {
+        // Remove any existing floating buttons (old pattern and new pattern)
         const existingButton = document.getElementById('floating-chat-button')
         if (existingButton) existingButton.remove()
+
+        // Remove buttons with new ID pattern
+        const floatingButtons = document.querySelectorAll('[id^="floating-chat-button-"]')
+        floatingButtons.forEach(button => button.remove())
     }
 
     /**
@@ -276,15 +721,12 @@ class ChatbaseManager {
      */
     createFloatingChatButton(bot, buttonText) {
         const floatingButton = document.createElement('button')
-        floatingButton.id = 'floating-chat-button'
+        floatingButton.id = `floating-chat-button-${bot.id}`
         floatingButton.title = buttonText
-        floatingButton.className = 'floating-chat-button floating-chat-button-right'
+        floatingButton.className =
+            'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
-        floatingButton.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `
+        floatingButton.innerHTML = `<div class="i-heroicons-chat-bubble-left-ellipsis w-6 h-6" id="floating-chat-icon-${bot.id}"></div>`
 
         floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
         document.body.appendChild(floatingButton)
@@ -308,10 +750,10 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     openChatbase(chatbotId, botId) {
-        console.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`)
+        logger.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`)
 
         if (this.isTransitioning) {
-            console.log('Transition in progress, ignoring click')
+            logger.log('Transition in progress, ignoring click')
             return
         }
 
@@ -322,7 +764,7 @@ class ChatbaseManager {
             return
         }
 
-        console.log('Creating new instance')
+        logger.log('Creating new instance')
         this.handleNewInstance(chatbotId, botId, button)
     }
 
@@ -332,13 +774,13 @@ class ChatbaseManager {
      */
     handleExistingInstance(botId) {
         const instance = this.chatInstances[botId]
-        console.log(`Existing instance found. Visible: ${instance.isVisible}`)
+        logger.log(`Existing instance found. Visible: ${instance.isVisible}`)
 
         if (instance.isVisible) {
-            console.log('Minimizing visible instance')
+            logger.log('Minimizing visible instance')
             this.minimizeChatInstance(botId)
         } else {
-            console.log('Restoring minimized instance')
+            logger.log('Restoring minimized instance')
             this.restoreChatInstance(botId)
         }
     }
@@ -356,7 +798,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            console.log(`Minimizing previous instance: ${this.currentBotId}`)
+            logger.log(`Minimizing previous instance: ${this.currentBotId}`)
             this.minimizeChatInstance(this.currentBotId)
         }
 
@@ -373,11 +815,13 @@ class ChatbaseManager {
         if (!button) return
 
         if (isLoading) {
-            button.classList.add('loading')
+            button.className =
+                'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5'
             button.disabled = true
             button.textContent = 'CARGANDO...'
         } else {
-            button.classList.remove('loading')
+            button.className =
+                'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95'
             button.disabled = false
         }
     }
@@ -388,37 +832,57 @@ class ChatbaseManager {
      * @param {string} state - State: 'active', 'minimized', 'loading', 'default'
      */
     updateButtonState(botId, state) {
-        console.log(`Updating button state for bot: ${botId}, state: ${state}`)
+        logger.log(`Updating button state for bot: ${botId}, state: ${state}`)
 
         const button = document.getElementById(`btn-${botId}`)
         const bot = this.bots.find(b => b.id === botId)
 
         if (!button || !bot) {
-            console.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`)
+            logger.error(`Button or bot not found. Button: ${!!button}, Bot: ${!!bot}`)
             return
         }
 
-        button.classList.remove('active', 'loading', 'minimized')
         button.disabled = false
 
-        switch (state) {
-            case 'active':
-                button.classList.add('active')
-                button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
-                break
-            case 'minimized':
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
-                break
-            case 'loading':
-                button.classList.add('loading')
-                button.textContent = 'CARGANDO...'
-                button.disabled = true
-                break
-            default:
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+        const buttonTextElement = button.querySelector(`#btn-text-${botId}`)
+
+        const stateConfigs = {
+            active: {
+                className:
+                    'bg-brand-green text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-green-700 hover:scale-105 active:scale-95',
+                text: `MINIMIZAR ${bot.name.toUpperCase()}`,
+                disabled: false,
+            },
+            minimized: {
+                className:
+                    'bg-brand-orange text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-orange-dark hover:scale-105 active:scale-95',
+                text: `HABLAR CON ${bot.name.toUpperCase()}`,
+                disabled: false,
+            },
+            loading: {
+                className:
+                    'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5',
+                text: 'CARGANDO...',
+                disabled: true,
+            },
         }
 
-        console.log(`Button updated for ${bot.name}`)
+        const config = stateConfigs[state] || {
+            className:
+                'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95',
+            text: `HABLAR CON ${bot.name.toUpperCase()}`,
+            disabled: false,
+        }
+
+        button.className = config.className
+        if (buttonTextElement) {
+            buttonTextElement.textContent = config.text
+        } else {
+            button.textContent = config.text
+        }
+        button.disabled = config.disabled
+
+        logger.log(`Button updated for ${bot.name}`)
     }
 
     /**
@@ -438,7 +902,7 @@ class ChatbaseManager {
 
             this.currentBotId = botId
         } catch (error) {
-            console.error('Error creating chat instance:', error)
+            logger.error('Error creating chat instance:', error)
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
         }
@@ -455,9 +919,15 @@ class ChatbaseManager {
 
         document.body.appendChild(chatContainer)
 
+        // Disable mobile scroll when chat opens
+        this.disableMobileScroll()
+
         // Add outside click listener with delay
-        setTimeout(() => {
-            document.addEventListener('click', outsideClickHandler)
+        const timeoutId = setTimeout(() => {
+            // Check if document still exists (for test environment)
+            if (typeof document !== 'undefined') {
+                document.addEventListener('click', outsideClickHandler)
+            }
         }, CONFIG.TRANSITION_DELAY)
 
         this.chatInstances[botId] = {
@@ -466,6 +936,7 @@ class ChatbaseManager {
             isVisible: true,
             chatbotId: chatbotId,
             outsideClickHandler: outsideClickHandler,
+            outsideClickTimeout: timeoutId,
         }
     }
 
@@ -510,7 +981,9 @@ class ChatbaseManager {
     createIframeContainer(botId) {
         const iframeContainer = document.createElement('div')
         iframeContainer.id = `chatbase-iframe-container-${botId}`
-        iframeContainer.style.cssText = STYLES.IFRAME_CONTAINER
+        iframeContainer.style.cssText = this.isMobile()
+            ? STYLES.IFRAME_CONTAINER_MOBILE
+            : STYLES.IFRAME_CONTAINER
         return iframeContainer
     }
 
@@ -522,6 +995,7 @@ class ChatbaseManager {
      */
     createIframe(chatbotId, botId) {
         const iframe = document.createElement('iframe')
+        iframe.id = `chatbase-iframe-${botId}`
         iframe.src = `${CONFIG.CHAT_BASE_URL}/chatbot-iframe/${chatbotId}`
         iframe.style.cssText = STYLES.IFRAME
         iframe.allow = 'microphone'
@@ -533,9 +1007,9 @@ class ChatbaseManager {
         }
 
         iframe.onerror = () => {
+            logger.error('Error loading Chatbase iframe')
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
-            console.error('Error loading Chatbase iframe')
         }
 
         return iframe
@@ -548,11 +1022,8 @@ class ChatbaseManager {
      */
     createCloseButton(botId) {
         const closeBtn = document.createElement('button')
-        closeBtn.innerHTML = `
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 10L12 15L17 10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        `
+        closeBtn.id = `close-btn-${botId}`
+        closeBtn.innerHTML = `<div class="i-heroicons-chevron-down w-6 h-6" id="close-icon-${botId}"></div>`
         closeBtn.style.cssText = STYLES.CLOSE_BUTTON
 
         this.setupCloseButtonEvents(closeBtn, botId)
@@ -588,6 +1059,11 @@ class ChatbaseManager {
      */
     createOutsideClickHandler(chatContainer, botId) {
         return event => {
+            // Disable outside click handler on mobile devices
+            if (this.isMobile()) {
+                return
+            }
+
             if (!chatContainer.contains(event.target)) {
                 this.minimizeChatInstance(botId)
                 document.removeEventListener('click', this.chatInstances[botId].outsideClickHandler)
@@ -623,7 +1099,7 @@ class ChatbaseManager {
         }
 
         script.onerror = () => {
-            console.error('Error loading Chatbase - switching to iframe mode')
+            logger.error('Error loading Chatbase - switching to iframe mode')
             CONFIG.IFRAME_MODE = true
             this.updateButtonState(botId, 'default')
             this.isTransitioning = false
@@ -643,11 +1119,11 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     minimizeChatInstance(botId) {
-        console.log(`Minimizing chat instance for bot: ${botId}`)
+        logger.log(`Minimizing chat instance for bot: ${botId}`)
 
         const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`)
+            logger.error(`No instance found for bot: ${botId}`)
             return
         }
 
@@ -663,9 +1139,9 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      * @returns {boolean} True if container is valid
      */
-    validateInstanceContainer(instance, botId) {
+    validateInstanceContainer(instance, _botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} not found in DOM during minimize`)
+            logger.error(`Container for bot not found in DOM during minimize`)
             return false
         }
         return true
@@ -676,14 +1152,23 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      * @param {string} botId - Bot ID
      */
-    hideInstance(instance, botId) {
+    hideInstance(instance, _botId) {
+        // Clear any pending timeout
+        if (instance.outsideClickTimeout) {
+            clearTimeout(instance.outsideClickTimeout)
+            instance.outsideClickTimeout = null
+        }
+
         if (instance.outsideClickHandler) {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
 
-        console.log(`Hiding container for bot ${botId}`)
+        logger.log(`Hiding container for bot`)
         instance.container.style.display = 'none'
         instance.isVisible = false
+
+        // Enable mobile scroll when chat instance is hidden/minimized
+        this.enableMobileScroll()
     }
 
     /**
@@ -702,7 +1187,7 @@ class ChatbaseManager {
         }
 
         this.updateFloatingChatButton()
-        console.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`)
+        logger.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`)
     }
 
     /**
@@ -710,11 +1195,11 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     restoreChatInstance(botId) {
-        console.log(`Restoring chat instance for bot: ${botId}`)
+        logger.log(`Restoring chat instance for bot: ${botId}`)
 
         const instance = this.chatInstances[botId]
         if (!instance) {
-            console.error(`No instance found for bot: ${botId}`)
+            logger.error(`No instance found for bot: ${botId}`)
             return
         }
 
@@ -739,7 +1224,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            console.log(`Minimizing previous visible instance: ${this.currentBotId}`)
+            logger.log(`Minimizing previous visible instance: ${this.currentBotId}`)
             this.minimizeChatInstance(this.currentBotId)
         }
     }
@@ -752,11 +1237,10 @@ class ChatbaseManager {
      */
     validateAndRecreateInstance(instance, botId) {
         if (!instance.container || !document.body.contains(instance.container)) {
-            console.error(`Container for bot ${botId} no longer exists in DOM. Recreating...`)
             delete this.chatInstances[botId]
             const bot = this.bots.find(b => b.id === botId)
             if (bot) {
-                console.log(`Recreating instance for bot: ${botId}`)
+                logger.log(`Recreating instance for bot: ${botId}`)
                 this.createChatInstance(bot.chatbaseId, botId)
             }
             return false
@@ -769,14 +1253,18 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      * @param {string} botId - Bot ID
      */
-    showInstance(instance, botId) {
-        console.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
+    showInstance(instance, _botId) {
+        logger.log(`Restoring bot ${_botId}, display before:`, instance.container.style.display)
+
+        // Disable mobile scroll when chat instance is shown/restored
+        this.disableMobileScroll()
+
         instance.container.style.display = 'flex'
         instance.container.style.visibility = 'visible'
         instance.isVisible = true
 
-        console.log(`Display after change:`, instance.container.style.display)
-        console.log(
+        logger.log(`Display after change:`, instance.container.style.display)
+        logger.log(
             `Container visible on screen:`,
             instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0
         )
@@ -806,6 +1294,9 @@ class ChatbaseManager {
         this.removeInstanceElements(instance)
         this.cleanupWidgetElements(instance, botId)
 
+        // Enable mobile scroll when chat instance is completely destroyed
+        this.enableMobileScroll()
+
         delete this.chatInstances[botId]
         this.updateButtonState(botId, 'default')
 
@@ -819,6 +1310,12 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      */
     removeInstanceEventListeners(instance) {
+        // Clear any pending timeout
+        if (instance.outsideClickTimeout) {
+            clearTimeout(instance.outsideClickTimeout)
+            instance.outsideClickTimeout = null
+        }
+
         if (instance.outsideClickHandler) {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
@@ -872,10 +1369,13 @@ class ChatbaseManager {
             this.cleanupOrphanedElements()
             this.cleanupGlobalProperties()
 
+            // Enable mobile scroll when all instances are cleaned up
+            this.enableMobileScroll()
+
             this.chatInstances = {}
             this.currentBotId = null
         } catch (error) {
-            console.error('Error cleaning up instances:', error)
+            logger.error('Error cleaning up instances:', error)
         }
     }
 
@@ -938,10 +1438,11 @@ class ChatbaseManager {
             this.renderExperts()
             this.renderBotList()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
 
-            console.log('All bots deleted')
+            logger.log('All bots deleted')
         } catch (error) {
-            console.error('Error deleting bots:', error)
+            logger.error('Error cleaning up instances:', error)
         }
     }
 
@@ -965,16 +1466,11 @@ class ChatbaseManager {
      * @returns {boolean} True if file is valid
      */
     validateImportFile(file) {
-        if (!file) {
-            alert('Por favor selecciona un archivo JSON')
+        const validation = ValidationHelper.validateImportFile(file)
+        if (!validation.isValid) {
+            alert(validation.error)
             return false
         }
-
-        if (!file.name.toLowerCase().endsWith('.json')) {
-            alert('El archivo debe ser de tipo JSON')
-            return false
-        }
-
         return true
     }
 
@@ -997,7 +1493,7 @@ class ChatbaseManager {
                 this.executeImport(importedData, fileInput)
             }
         } catch (error) {
-            console.error('Error importing file:', error)
+            logger.error('Error importing file:', error)
             alert('Error al procesar el archivo JSON. Verifica que el formato sea válido.')
         }
     }
@@ -1008,31 +1504,11 @@ class ChatbaseManager {
      * @returns {boolean} True if data is valid
      */
     validateImportData(importedData) {
-        if (!Array.isArray(importedData)) {
-            alert('El archivo JSON debe contener un array de bots')
+        const validation = ValidationHelper.validateImportData(importedData)
+        if (!validation.isValid) {
+            alert(validation.error)
             return false
         }
-
-        const isValidData = importedData.every(bot => {
-            return (
-                bot &&
-                typeof bot === 'object' &&
-                typeof bot.id === 'string' &&
-                typeof bot.name === 'string' &&
-                typeof bot.description === 'string' &&
-                typeof bot.chatbaseId === 'string' &&
-                (bot.avatar === null || typeof bot.avatar === 'string') &&
-                typeof bot.isDefault === 'boolean'
-            )
-        })
-
-        if (!isValidData) {
-            alert(
-                'El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault'
-            )
-            return false
-        }
-
         return true
     }
 
@@ -1051,24 +1527,80 @@ class ChatbaseManager {
         this.updateFloatingChatButton()
 
         fileInput.value = ''
+        this.updateButtonStates()
 
         alert(`Se importaron ${importedData.length} bot(s) correctamente`)
-        console.log('Data imported successfully:', importedData)
+        logger.log('Data imported successfully:', importedData)
+    }
+
+    /**
+     * Update button states based on conditions
+     */
+    updateButtonStates() {
+        const importFile = document.getElementById('importFile')
+        const importButton = document.getElementById('importButton')
+        const clearAllButton = document.getElementById('clearAllButton')
+
+        // Enable/disable import button based on file selection
+        if (importFile && importButton) {
+            const hasFile = importFile.files && importFile.files.length > 0
+            if (hasFile) {
+                importButton.disabled = false
+                importButton.className =
+                    'bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5 flex items-center justify-center gap-2'
+                importButton.innerHTML =
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4" id="import-button-icon"></div><span id="import-button-text">Importar datos</span>'
+            } else {
+                importButton.disabled = true
+                importButton.className =
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5 flex items-center justify-center gap-2'
+                importButton.innerHTML =
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4" id="import-button-icon"></div><span id="import-button-text">Importar datos</span>'
+            }
+        }
+
+        // Enable/disable clear all button based on bots existence
+        if (clearAllButton) {
+            const hasBots = this.bots && this.bots.length > 0
+            if (hasBots) {
+                clearAllButton.disabled = false
+                clearAllButton.className =
+                    'bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700 flex items-center justify-center gap-2'
+                clearAllButton.innerHTML =
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4" id="clear-all-icon"></div><span id="clear-all-text">Eliminar todos los bots</span>'
+            } else {
+                clearAllButton.disabled = true
+                clearAllButton.className =
+                    'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 flex items-center justify-center gap-2'
+                clearAllButton.innerHTML =
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4" id="clear-all-icon"></div><span id="clear-all-text">Eliminar todos los bots</span>'
+            }
+        }
     }
 
     /**
      * Open configuration modal
      */
     openConfig() {
-        document.getElementById('configModal').classList.add('active')
+        const modal = document.getElementById('configModal')
+        modal.classList.remove('hidden')
+        modal.classList.add('active')
         this.renderBotList()
+        this.updateButtonStates()
+        this.setupThemeSwitch()
     }
 
     /**
      * Close configuration modal
      */
     closeConfig() {
-        document.getElementById('configModal').classList.remove('active')
+        const modal = document.getElementById('configModal')
+        // Add closing class to trigger fade-out animation
+        modal.classList.add('closing')
+        setTimeout(() => {
+            modal.classList.remove('active', 'closing')
+            modal.classList.add('hidden')
+        }, 150)
     }
 
     /**
@@ -1077,7 +1609,7 @@ class ChatbaseManager {
     renderBotList() {
         const botList = document.getElementById('botList')
         botList.innerHTML =
-            '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>'
+            '<h3 class="mb-2.5 text-lg text-slate-800 font-semibold" id="bot-list-title">Bots actuales</h3>'
 
         this.bots.forEach((bot, index) => {
             const botItem = this.createBotListItem(bot, index)
@@ -1093,20 +1625,31 @@ class ChatbaseManager {
      */
     createBotListItem(bot, index) {
         const botItem = document.createElement('div')
-        botItem.className = 'bot-item'
+        botItem.id = `bot-list-item-${bot.id}`
+
+        // Apply different styles for default bot
+        const borderClass = bot.isDefault ? 'border-2 border-brand-blue' : 'border border-gray-100'
+
+        const backgroundClass = bot.isDefault
+            ? 'bg-slate-50' // Color más sutil usando slate
+            : 'bg-white'
+
+        botItem.className = `${borderClass} ${backgroundClass} rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 relative`
+
         botItem.innerHTML = `
-            <div class="bot-info">
-                <div class="bot-name">${bot.name}</div>
-                <div class="bot-id">ID: ${bot.chatbaseId}</div>
-                ${bot.avatar ? '<div class="bot-id">Avatar: Personalizado</div>' : '<div class="bot-id">Avatar: Iniciales</div>'}
+            ${bot.isDefault ? `<div class="absolute top-2 right-2 bg-brand-blue text-white text-xs px-2 py-1 rounded-full font-semibold" id="default-badge-${bot.id}">POR DEFECTO</div>` : ''}
+            <div class="flex-1" id="bot-info-${bot.id}">
+                <div class="font-semibold text-slate-800 mb-1" id="bot-name-display-${bot.id}">${bot.name}</div>
+                <div class="text-xs text-slate-500 font-mono" id="bot-id-display-${bot.id}">ID: ${bot.chatbaseId}</div>
+                ${bot.avatar ? `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Personalizado</div>` : `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Iniciales</div>`}
             </div>
-            <div class="bot-controls">
-                <label class="default-radio-label">
-                    <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
-                           onchange="chatManager.setDefaultBot('${bot.id}')" class="default-radio">
-                    <span class="radio-text">Por defecto</span>
-                </label>
-                <button class="delete-bot" onclick="chatManager.deleteBot(${index})">Eliminar</button>
+            <div class="flex items-center gap-4" id="bot-actions-${bot.id}">
+                <button class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-brand-blue-dark flex items-center justify-center" onclick="chatManager.setDefaultBot('${bot.id}')" id="set-default-btn-${bot.id}" ${bot.isDefault ? 'style="display: none;"' : ''}>
+                    <div class="i-heroicons-star w-3 h-3" id="set-default-icon-${bot.id}"></div>
+                </button>
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center justify-center" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}">
+                    <div class="i-heroicons-trash w-3 h-3" id="delete-bot-icon-${bot.id}"></div>
+                </button>
             </div>
         `
         return botItem
@@ -1127,6 +1670,7 @@ class ChatbaseManager {
         this.renderExperts()
         this.renderBotList()
         this.clearBotForm()
+        this.updateButtonStates()
     }
 
     /**
@@ -1148,8 +1692,9 @@ class ChatbaseManager {
      * @returns {boolean} True if valid
      */
     validateBotForm(formData) {
-        if (!formData.name || !formData.description || !formData.chatbaseId) {
-            alert('Por favor, completa todos los campos obligatorios')
+        const validation = ValidationHelper.validateBotForm(formData)
+        if (!validation.isValid) {
+            alert(validation.errors.join('\n'))
             return false
         }
         return true
@@ -1198,32 +1743,249 @@ class ChatbaseManager {
         this.saveBots()
         this.renderExperts()
         this.renderBotList()
+        this.updateButtonStates()
     }
 
     /**
      * Debug function to inspect chat instances state
      */
     debugChatInstances() {
-        console.log('=== Chat Instances Debug ===')
-        console.log('Current Bot ID:', this.currentBotId)
-        console.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
-        console.log('Chat Instances:', Object.keys(this.chatInstances))
+        // Only run in development
+        if (import.meta.env.PROD) return
+
+        logger.log('=== Chat Instances Debug ===')
+        logger.log('Current Bot ID:', this.currentBotId)
+        logger.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
+        logger.log('Chat Instances:', Object.keys(this.chatInstances))
 
         Object.entries(this.chatInstances).forEach(([botId, instance]) => {
-            console.log(`\nBot ${botId}:`)
-            console.log('- Is Visible:', instance.isVisible)
-            console.log('- Has Container:', !!instance.container)
-            console.log(
+            logger.log(`\nBot ${botId}:`)
+            logger.log('- Is Visible:', instance.isVisible)
+            logger.log('- Has Container:', !!instance.container)
+            logger.log(
                 '- Container in DOM:',
                 instance.container ? document.body.contains(instance.container) : false
             )
-            console.log(
+            logger.log(
                 '- Container Display:',
                 instance.container ? instance.container.style.display : 'N/A'
             )
-            console.log('- Chatbot ID:', instance.chatbotId)
+            logger.log('- Chatbot ID:', instance.chatbotId)
         })
-        console.log('=======================')
+        logger.log('=======================')
+    }
+
+    /**
+     * Initialize carousel functionality for mobile
+     */
+    initializeCarousel() {
+        this.currentCarouselIndex = 0
+        this.cleanupCarouselListeners()
+        this.setupCarouselControls()
+        this.setupCarouselScrollListener()
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Cleanup carousel event listeners
+     */
+    cleanupCarouselListeners() {
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+        const grid = document.getElementById('expertsGrid')
+
+        // Remove old event listeners by cloning elements
+        if (prevButton) {
+            const newPrev = prevButton.cloneNode(true)
+            prevButton.parentNode.replaceChild(newPrev, prevButton)
+        }
+
+        if (nextButton) {
+            const newNext = nextButton.cloneNode(true)
+            nextButton.parentNode.replaceChild(newNext, nextButton)
+        }
+
+        if (grid && this.scrollListener) {
+            grid.removeEventListener('scroll', this.scrollListener)
+            this.scrollListener = null
+        }
+    }
+
+    /**
+     * Setup carousel control buttons
+     */
+    setupCarouselControls() {
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+
+        if (prevButton) {
+            prevButton.addEventListener('click', () => this.navigateCarousel('prev'))
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener('click', () => this.navigateCarousel('next'))
+        }
+
+        // Generate dot indicators
+        this.generateCarouselDots()
+    }
+
+    /**
+     * Generate carousel dot indicators
+     */
+    generateCarouselDots() {
+        const dotsContainer = document.getElementById('carouselDots')
+        if (!dotsContainer) {
+            logger.error('Carousel dots container not found')
+            return
+        }
+
+        dotsContainer.innerHTML = ''
+
+        logger.log(`Generating ${this.bots.length} carousel dots`)
+
+        this.bots.forEach((_, index) => {
+            const dot = document.createElement('button')
+            dot.type = 'button'
+            dot.className =
+                'w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-300 hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+            dot.setAttribute('aria-label', `Go to slide ${index + 1}`)
+            dot.setAttribute('data-carousel-dot', index)
+            dot.addEventListener('click', () => this.goToCarouselSlide(index))
+            dotsContainer.appendChild(dot)
+        })
+
+        // Set initial active dot
+        if (dotsContainer.children[0]) {
+            dotsContainer.children[0].className =
+                'w-6 h-2 rounded bg-brand-blue dark:bg-blue-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+        }
+    }
+
+    /**
+     * Setup scroll listener for carousel
+     */
+    setupCarouselScrollListener() {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        let isScrolling = null
+
+        this.scrollListener = () => {
+            // Clear our timeout throughout the scroll
+            window.clearTimeout(isScrolling)
+
+            // Set a timeout to run after scrolling ends
+            isScrolling = setTimeout(() => {
+                this.updateCarouselOnScroll()
+            }, 66)
+        }
+
+        grid.addEventListener('scroll', this.scrollListener)
+    }
+
+    /**
+     * Update carousel index based on scroll position
+     */
+    updateCarouselOnScroll() {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        const cards = grid.querySelectorAll(':scope > div')
+        if (cards.length === 0) return
+
+        const scrollLeft = grid.scrollLeft
+        const containerWidth = grid.offsetWidth
+
+        // Find which card is most visible
+        let closestIndex = 0
+        let closestDistance = Infinity
+
+        cards.forEach((card, index) => {
+            const cardLeft = card.offsetLeft - grid.offsetLeft
+            const cardCenter = cardLeft + card.offsetWidth / 2
+            const containerCenter = scrollLeft + containerWidth / 2
+            const distance = Math.abs(cardCenter - containerCenter)
+
+            if (distance < closestDistance) {
+                closestDistance = distance
+                closestIndex = index
+            }
+        })
+
+        this.currentCarouselIndex = closestIndex
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Navigate carousel
+     * @param {string} direction - 'prev' or 'next'
+     */
+    navigateCarousel(direction) {
+        const totalSlides = this.bots.length
+
+        if (direction === 'prev') {
+            this.currentCarouselIndex = Math.max(0, this.currentCarouselIndex - 1)
+        } else {
+            this.currentCarouselIndex = Math.min(totalSlides - 1, this.currentCarouselIndex + 1)
+        }
+
+        this.goToCarouselSlide(this.currentCarouselIndex)
+    }
+
+    /**
+     * Go to specific carousel slide
+     * @param {number} index - Slide index
+     */
+    goToCarouselSlide(index) {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        const cards = grid.querySelectorAll(':scope > div')
+        if (cards[index]) {
+            cards[index].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            })
+        }
+
+        this.currentCarouselIndex = index
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Update carousel indicators (dots and buttons)
+     */
+    updateCarouselIndicators() {
+        // Update dots
+        const dotsContainer = document.getElementById('carouselDots')
+        if (dotsContainer) {
+            const dots = dotsContainer.querySelectorAll('button[data-carousel-dot]')
+            dots.forEach((dot, index) => {
+                if (index === this.currentCarouselIndex) {
+                    // Active state
+                    dot.className =
+                        'w-6 h-2 rounded bg-brand-blue dark:bg-blue-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+                } else {
+                    // Inactive state
+                    dot.className =
+                        'w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-300 hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+                }
+            })
+        }
+
+        // Update prev/next buttons
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+
+        if (prevButton) {
+            prevButton.disabled = this.currentCarouselIndex === 0
+        }
+
+        if (nextButton) {
+            nextButton.disabled = this.currentCarouselIndex === this.bots.length - 1
+        }
     }
 }
 
@@ -1244,5 +2006,8 @@ window.debugChatInstances = () => chatManager.debugChatInstances()
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Chatbase Manager initialized')
+    logger.log('Chatbase Manager initialized')
 })
+
+// Export for testing
+export { ChatbaseManager, chatManager }

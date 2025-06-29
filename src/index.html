@@ -1,82 +1,144 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expertos que te apoyan - Chatbase</title>
-    <link rel="stylesheet" href="styles.css">
+<html lang="es" id="main-html">
+<head id="main-head">
+    <meta charset="UTF-8" id="charset-meta">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" id="viewport-meta">
+    <title id="page-title">Expertos que te apoyan - Chatbase</title>
+    <link rel="stylesheet" href="styles.css" id="main-stylesheet">
 </head>
-<body>
+<body class="font-sans bg-gray-light min-h-screen w-full max-w-full p-5 scrollbar-modern" id="main-body">
     <!-- GitHub Repository Link -->
-    <a href="https://github.com/bypabloc/chatbase-multiple-instances" target="_blank" rel="noopener noreferrer" class="github-link">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-        </svg>
-        <span>GitHub</span>
+    <a href="https://github.com/bypabloc/chatbase-multiple-instances" target="_blank" rel="noopener noreferrer" 
+       class="fixed top-5 left-5 flex items-center gap-2 px-4 py-2.5 bg-github-dark text-white no-underline rounded-lg text-sm font-medium z-[1000] transition-all duration-300 shadow-md hover:bg-github-darker hover:-translate-y-0.5 hover:shadow-lg md:px-3 md:py-2 md:text-xs md:top-2.5 md:left-2.5"
+       id="github-link">
+        <div class="i-mdi-github w-5 h-5 flex-shrink-0 md:w-4 md:h-4" id="github-icon"></div>
+        <span id="github-text">GitHub</span>
     </a>
 
-    <div class="container">
-        <div class="header">
-            <span class="badge">EXPERTOS QUE TE APOYAN</span>
-            <h1>No estás solo, ni tienes que resolverlo todo tú <span class="heart">💙</span></h1>
-            <p class="subtitle">
-                Estos cuatro expertos llevan <strong>más de 8 años ayudando a miles de chilenos</strong> a ordenar sus finanzas, salir del estrés de las deudas, llegar a fin de mes y entender qué hacer con su plata. Conversa con quien sientas que más te puede ayudar.
+    <div class="max-w-[1200px] mx-auto bg-white rounded-[20px] p-10 shadow-[0_2px_20px_rgba(0,0,0,0.1)] md:p-5" id="main-container">
+        <div class="text-center mb-12" id="hero-section">
+            <span class="inline-flex items-center bg-brand-blue text-white px-5 py-2 rounded-full text-sm font-semibold mb-5" id="hero-badge">
+                <div class="i-heroicons-star w-4 h-4 mr-2" id="hero-badge-icon"></div>
+                <span id="hero-badge-text">EXPERTOS QUE TE APOYAN</span>
+            </span>
+            <h1 class="text-4xl text-slate-800 font-bold mb-4 md:text-3xl" id="hero-title">
+                <span id="hero-title-text">No estás solo, ni tienes que resolverlo todo tú</span> 
+                <div class="i-heroicons-heart text-blue-500 w-9 h-9 inline-block" id="hero-heart-icon"></div>
+            </h1>
+            <p class="text-lg text-slate-500 leading-relaxed max-w-[900px] mx-auto md:text-base" id="hero-description">
+                Estos cuatro expertos llevan <strong id="hero-highlight">más de 8 años ayudando a miles de chilenos</strong> a ordenar sus finanzas, salir del estrés de las deudas, llegar a fin de mes y entender qué hacer con su plata. Conversa con quien sientas que más te puede ayudar.
             </p>
         </div>
 
-        <div class="experts-grid" id="expertsGrid">
-            <!-- Los expertos se cargarán dinámicamente aquí -->
+        <div class="relative" id="expertsContainer">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-12 max-md:overflow-hidden max-md:relative" id="expertsGrid">
+                <!-- Los expertos se cargarán dinámicamente aquí -->
+            </div>
+            
+            <!-- Carousel controls for mobile -->
+            <div class="hidden max-md:flex flex-col items-center mt-6 gap-4" id="carouselControls">
+                <!-- Navigation buttons -->
+                <div class="flex items-center gap-4" id="carouselNavigation">
+                    <button class="w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" id="carouselPrev" aria-label="Previous">
+                        <div class="i-heroicons-chevron-left w-5 h-5 text-gray-600 dark:text-gray-300"></div>
+                    </button>
+                    
+                    <!-- Dot indicators -->
+                    <div class="flex items-center gap-2" id="carouselDots">
+                        <!-- Dots will be generated dynamically -->
+                    </div>
+                    
+                    <button class="w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" id="carouselNext" aria-label="Next">
+                        <div class="i-heroicons-chevron-right w-5 h-5 text-gray-600 dark:text-gray-300"></div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <button class="config-button" onclick="openConfig()">⚙️ Configuración</button>
+    <button class="fixed top-5 right-5 bg-slate-800 text-white border-none px-5 py-3 rounded-full cursor-pointer text-sm font-semibold shadow-[0_4px_20px_rgba(0,0,0,0.2)] transition-all duration-300 z-[1000] hover:bg-slate-900 hover:scale-105 flex items-center gap-2" onclick="openConfig()" id="config-button">
+        <div class="i-heroicons-cog-6-tooth w-4 h-4" id="config-button-icon"></div>
+        <span id="config-button-text">Configuración</span>
+    </button>
 
     <!-- Modal de Configuración -->
-    <div class="modal" id="configModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Configuración de Bots</h2>
-                <button class="close-button" onclick="closeConfig()">&times;</button>
+    <div class="hidden fixed top-0 left-0 w-full h-full bg-black/50 z-[2000] animate-fade-in [&.active]:flex [&.active]:items-center [&.active]:justify-center" id="configModal">
+        <div class="bg-white rounded-2xl max-w-[600px] w-[90%] max-h-[80vh] overflow-y-auto animate-slide-in scrollbar-modern m-4 md:m-8" id="modal-content">
+            <div class="p-8 space-y-6" id="modal-content-wrapper">
+            <div class="flex justify-between items-center" id="modal-header">
+                <h2 class="text-2xl font-bold text-slate-800" id="modal-title">Configuración de Bots</h2>
+                <button class="bg-transparent border-none cursor-pointer text-slate-500 p-1 transition-colors duration-300 hover:text-slate-800 flex items-center justify-center" onclick="closeConfig()" id="modal-close-button">
+                    <div class="i-heroicons-x-mark w-6 h-6" id="modal-close-icon"></div>
+                </button>
             </div>
 
-            <div class="bot-list" id="botList">
+            <div id="botList">
                 <!-- Lista de bots se cargará aquí -->
             </div>
 
-            <div class="add-bot-form">
-                <h3 style="margin-bottom: 15px; font-size: 18px; color: #1e293b;">Agregar nuevo bot</h3>
-                <div class="form-group">
-                    <label class="form-label">Nombre</label>
-                    <input type="text" class="form-input" id="botName" placeholder="Ej: María">
+            <div class="bg-slate-50 border border-gray-200 rounded-lg p-5" id="add-bot-section">
+                <h3 class="mb-4 text-lg text-slate-800 font-semibold" id="add-bot-title">Agregar nuevo bot</h3>
+                <div class="mb-4" id="bot-name-field">
+                    <label class="block text-sm font-semibold text-slate-800 mb-1" id="bot-name-label">Nombre</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm transition-colors duration-300 focus:outline-none focus:border-brand-blue" id="botName" placeholder="Ej: María">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Descripción</label>
-                    <input type="text" class="form-input" id="botDescription" placeholder="Ej: Te ayuda con tus finanzas">
+                <div class="mb-4" id="bot-description-field">
+                    <label class="block text-sm font-semibold text-slate-800 mb-1" id="bot-description-label">Descripción</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm transition-colors duration-300 focus:outline-none focus:border-brand-blue" id="botDescription" placeholder="Ej: Te ayuda con tus finanzas">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">URL del Avatar (opcional)</label>
-                    <input type="text" class="form-input" id="botAvatar" placeholder="Ej: https://ejemplo.com/avatar.jpg">
+                <div class="mb-4" id="bot-avatar-field">
+                    <label class="block text-sm font-semibold text-slate-800 mb-1" id="bot-avatar-label">URL del Avatar (opcional)</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm transition-colors duration-300 focus:outline-none focus:border-brand-blue" id="botAvatar" placeholder="Ej: https://ejemplo.com/avatar.jpg">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">ID de Chatbase</label>
-                    <input type="text" class="form-input" id="botId" placeholder="Ej: ABC123...">
+                <div class="mb-4" id="bot-id-field">
+                    <label class="block text-sm font-semibold text-slate-800 mb-1" id="bot-id-label">ID de Chatbase</label>
+                    <input type="text" class="w-full px-3 py-2 border border-gray-200 rounded-md text-sm transition-colors duration-300 focus:outline-none focus:border-brand-blue" id="botId" placeholder="Ej: ABC123...">
                 </div>
-                <button class="add-bot-button" onclick="addBot()">Agregar Bot</button>
+                <button class="bg-brand-blue text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-brand-blue-dark" onclick="addBot()" id="add-bot-button">Agregar Bot</button>
             </div>
             
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-                <h3 style="margin-bottom: 15px; font-size: 18px; color: #1e293b;">Opciones avanzadas</h3>
-                <div style="margin-bottom: 15px;">
-                    <label class="form-label">Importar configuración desde archivo JSON</label>
-                    <input type="file" id="importFile" accept=".json" style="margin-bottom: 10px; padding: 8px; border: 1px solid #d1d5db; border-radius: 8px; width: 100%; font-size: 14px;">
-                    <button class="add-bot-button" onclick="importFromFile()" style="background-color: #059669; margin-right: 10px;">Importar datos</button>
+            <div class="pt-6 border-t border-gray-200" id="advanced-options-section">
+                <h3 class="mb-4 text-lg text-slate-800 font-semibold" id="advanced-options-title">Opciones avanzadas</h3>
+                
+                <!-- Theme Switch -->
+                <div class="mb-6" id="theme-section">
+                    <label class="block text-sm font-semibold text-slate-800 mb-3" id="theme-label">Tema de la aplicación</label>
+                    <div class="flex items-center justify-between bg-gray-100 rounded-lg p-1" id="themeSwitch">
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="light" id="theme-light-button">
+                            <div class="i-heroicons-sun w-4 h-4" id="theme-light-icon"></div>
+                            <span id="theme-light-text">Claro</span>
+                        </button>
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="dark" id="theme-dark-button">
+                            <div class="i-heroicons-moon w-4 h-4" id="theme-dark-icon"></div>
+                            <span id="theme-dark-text">Oscuro</span>
+                        </button>
+                        <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 flex items-center justify-center gap-2" data-theme="system" id="theme-system-button">
+                            <div class="i-heroicons-computer-desktop w-4 h-4" id="theme-system-icon"></div>
+                            <span id="theme-system-text">Sistema</span>
+                        </button>
+                    </div>
                 </div>
-                <button class="load-default-button" onclick="clearAllBots()" style="background-color: #dc2626;">Eliminar todos los bots</button>
+                
+                <div class="mb-4" id="import-section">
+                    <label class="block text-sm font-semibold text-slate-800 mb-1" id="import-label">Importar configuración desde archivo JSON</label>
+                    <input type="file" id="importFile" accept=".json" class="mb-2.5 p-2 border border-gray-300 rounded-lg w-full text-sm" onchange="chatManager.updateButtonStates()">
+                    <button id="importButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5 flex items-center justify-center gap-2" disabled onclick="importFromFile()">
+                        <div class="i-heroicons-arrow-down-tray w-4 h-4" id="import-button-icon"></div>
+                        <span id="import-button-text">Importar datos</span>
+                    </button>
+                </div>
+                <div id="clear-all-section">
+                    <button id="clearAllButton" class="bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 flex items-center justify-center gap-2" disabled onclick="clearAllBots()">
+                        <div class="i-heroicons-exclamation-triangle w-4 h-4" id="clear-all-icon"></div>
+                        <span id="clear-all-text">Eliminar todos los bots</span>
+                    </button>
+                </div>
+            </div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="script.js"></script>
-    <script defer src="/_vercel/insights/script.js"></script>
+    <script type="module" src="script.js" id="main-script"></script>
+    <script defer src="/_vercel/insights/script.js" id="vercel-script"></script>
 </body>
 </html>

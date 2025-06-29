@@ -2,344 +2,393 @@
  * Unit tests for ChatbaseManager class
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { 
-  mockBots, 
-  invalidBots, 
-  createMockChatbaseManager,
-  createMockFile,
-  createMockFileReader,
-  setupLocalStorageWithBots,
-  mockMobileViewport,
-  mockDesktopViewport
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+    createMockFile,
+    invalidBots,
+    mockBots,
+    mockDesktopViewport,
+    mockMobileViewport,
+    setupLocalStorageWithBots,
 } from './helpers.js'
+
+// Mock window.matchMedia for theme system
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+})
 
 // We need to mock the script.js module since it has side effects
 const mockChatbaseManagerClass = class ChatbaseManager {
-  constructor() {
-    this.bots = []
-    this.chatInstances = {}
-    this.currentBotId = null
-    this.lastMinimizedBotId = null
-    this.isTransitioning = false
-  }
-
-  // Copy all methods from the real implementation
-  loadBots() {
-    try {
-      const savedBots = localStorage.getItem('chatbaseBots')
-      this.bots = savedBots ? JSON.parse(savedBots) : []
-      this.renderExperts()
-      this.updateFloatingChatButton()
-    } catch (error) {
-      console.error('Error loading bots:', error)
-      this.bots = []
-      this.renderExperts()
-      this.updateFloatingChatButton()
+    constructor() {
+        this.bots = []
+        this.chatInstances = {}
+        this.currentBotId = null
+        this.lastMinimizedBotId = null
+        this.isTransitioning = false
     }
-  }
 
-  saveBots() {
-    localStorage.setItem('chatbaseBots', JSON.stringify(this.bots))
-  }
-
-  getDefaultBot() {
-    if (!this.bots || this.bots.length === 0) return null
-    return this.bots.find(bot => bot.isDefault) || this.bots[0]
-  }
-
-  setDefaultBot(botId) {
-    this.bots.forEach(bot => {
-      bot.isDefault = (bot.id === botId)
-    })
-    this.saveBots()
-    this.updateFloatingChatButton()
-  }
-
-  getInitials(name) {
-    return name.split(' ').map(word => word[0]).join('').slice(0, 2)
-  }
-
-  isMobile() {
-    return window.innerWidth <= 768
-  }
-
-  validateImportFile(file) {
-    if (!file) {
-      alert('Por favor selecciona un archivo JSON')
-      return false
+    // Copy all methods from the real implementation
+    loadBots() {
+        try {
+            const savedBots = localStorage.getItem('chatbaseBots')
+            this.bots = savedBots ? JSON.parse(savedBots) : []
+            this.renderExperts()
+            this.updateFloatingChatButton()
+        } catch (error) {
+            console.error('Error loading bots:', error)
+            this.bots = []
+            this.renderExperts()
+            this.updateFloatingChatButton()
+        }
     }
-    
-    if (!file.name.toLowerCase().endsWith('.json')) {
-      alert('El archivo debe ser de tipo JSON')
-      return false
-    }
-    
-    return true
-  }
 
-  validateImportData(importedData) {
-    if (!Array.isArray(importedData)) {
-      alert('El archivo JSON debe contener un array de bots')
-      return false
+    saveBots() {
+        localStorage.setItem('chatbaseBots', JSON.stringify(this.bots))
     }
-    
-    const isValidData = importedData.every(bot => {
-      return bot && 
-             typeof bot === 'object' &&
-             typeof bot.id === 'string' &&
-             typeof bot.name === 'string' &&
-             typeof bot.description === 'string' &&
-             typeof bot.chatbaseId === 'string' &&
-             (bot.avatar === null || typeof bot.avatar === 'string') &&
-             typeof bot.isDefault === 'boolean'
-    })
-    
-    if (!isValidData) {
-      alert('El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault')
-      return false
-    }
-    
-    return true
-  }
 
-  validateBotForm(formData) {
-    if (!formData.name || !formData.description || !formData.chatbaseId) {
-      alert('Por favor, completa todos los campos obligatorios')
-      return false
+    getDefaultBot() {
+        if (!this.bots || this.bots.length === 0) return null
+        return this.bots.find(bot => bot.isDefault) || this.bots[0]
     }
-    return true
-  }
 
-  createBotFromForm(formData) {
-    return {
-      id: formData.name.toLowerCase().replace(/\s/g, '-'),
-      name: formData.name,
-      description: formData.description,
-      chatbaseId: formData.chatbaseId,
-      avatar: formData.avatar || null,
-      isDefault: false
+    setDefaultBot(botId) {
+        this.bots.forEach(bot => {
+            bot.isDefault = bot.id === botId
+        })
+        this.saveBots()
+        this.updateFloatingChatButton()
     }
-  }
 
-  renderExperts() { /* Mock */ }
-  updateFloatingChatButton() { /* Mock */ }
-  setupEventListeners() { /* Mock */ }
+    getInitials(name) {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .slice(0, 2)
+    }
+
+    isMobile() {
+        return window.innerWidth <= 768
+    }
+
+    validateImportFile(file) {
+        if (!file) {
+            alert('Por favor selecciona un archivo JSON')
+            return false
+        }
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            alert('El archivo debe ser de tipo JSON')
+            return false
+        }
+
+        return true
+    }
+
+    validateImportData(importedData) {
+        if (!Array.isArray(importedData)) {
+            alert('El archivo JSON debe contener un array de bots')
+            return false
+        }
+
+        const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
+
+        for (const bot of importedData) {
+            if (!bot || typeof bot !== 'object') {
+                alert('Cada elemento debe ser un objeto válido')
+                return false
+            }
+
+            for (const field of requiredFields) {
+                if (!(field in bot)) {
+                    alert(`El campo '${field}' es requerido en todos los bots`)
+                    return false
+                }
+            }
+
+            if (typeof bot.isDefault !== 'boolean') {
+                alert('El campo isDefault debe ser true o false')
+                return false
+            }
+        }
+
+        return true
+    }
+
+    validateBotForm(formData) {
+        const errors = []
+
+        if (!formData.name?.trim()) {
+            errors.push('El nombre es requerido')
+        }
+
+        if (!formData.description?.trim()) {
+            errors.push('La descripción es requerida')
+        }
+
+        if (!formData.chatbaseId?.trim()) {
+            errors.push('El ID de Chatbase es requerido')
+        }
+
+        if (errors.length > 0) {
+            alert(errors.join('\n'))
+            return false
+        }
+        return true
+    }
+
+    createBotFromForm(formData) {
+        return {
+            id: formData.name.toLowerCase().replace(/\s/g, '-'),
+            name: formData.name,
+            description: formData.description,
+            chatbaseId: formData.chatbaseId,
+            avatar: formData.avatar || null,
+            isDefault: false,
+        }
+    }
+
+    renderExperts() {
+        /* Mock */
+    }
+    updateFloatingChatButton() {
+        /* Mock */
+    }
+    setupEventListeners() {
+        /* Mock */
+    }
 }
 
 describe('ChatbaseManager - Basic Functionality', () => {
-  let manager
+    let manager
 
-  beforeEach(() => {
-    manager = new mockChatbaseManagerClass()
-  })
-
-  describe('Initialization', () => {
-    it('should initialize with empty state', () => {
-      expect(manager.bots).toEqual([])
-      expect(manager.chatInstances).toEqual({})
-      expect(manager.currentBotId).toBeNull()
-      expect(manager.lastMinimizedBotId).toBeNull()
-      expect(manager.isTransitioning).toBe(false)
-    })
-  })
-
-  describe('Bot Management', () => {
     beforeEach(() => {
-      manager.bots = [...mockBots]
+        manager = new mockChatbaseManagerClass()
     })
 
-    it('should get default bot correctly', () => {
-      const defaultBot = manager.getDefaultBot()
-      expect(defaultBot).toEqual(mockBots[0]) // María is default
-      expect(defaultBot.isDefault).toBe(true)
+    describe('Initialization', () => {
+        it('should initialize with empty state', () => {
+            expect(manager.bots).toEqual([])
+            expect(manager.chatInstances).toEqual({})
+            expect(manager.currentBotId).toBeNull()
+            expect(manager.lastMinimizedBotId).toBeNull()
+            expect(manager.isTransitioning).toBe(false)
+        })
     })
 
-    it('should return first bot if no default is set', () => {
-      manager.bots.forEach(bot => bot.isDefault = false)
-      const defaultBot = manager.getDefaultBot()
-      expect(defaultBot).toEqual(mockBots[0])
+    describe('Bot Management', () => {
+        beforeEach(() => {
+            manager.bots = [...mockBots]
+        })
+
+        it('should get default bot correctly', () => {
+            const defaultBot = manager.getDefaultBot()
+            expect(defaultBot).toEqual(mockBots[0]) // María is default
+            expect(defaultBot.isDefault).toBe(true)
+        })
+
+        it('should return first bot if no default is set', () => {
+            manager.bots.forEach(bot => {
+                bot.isDefault = false
+            })
+            const defaultBot = manager.getDefaultBot()
+            expect(defaultBot).toEqual(mockBots[0])
+        })
+
+        it('should return null if no bots exist', () => {
+            manager.bots = []
+            const defaultBot = manager.getDefaultBot()
+            expect(defaultBot).toBeNull()
+        })
+
+        it('should set default bot correctly', () => {
+            manager.setDefaultBot('juan-inversion')
+
+            expect(manager.bots[0].isDefault).toBe(false) // María
+            expect(manager.bots[1].isDefault).toBe(true) // Juan
+            expect(manager.bots[2].isDefault).toBe(false) // Ana
+        })
     })
 
-    it('should return null if no bots exist', () => {
-      manager.bots = []
-      const defaultBot = manager.getDefaultBot()
-      expect(defaultBot).toBeNull()
+    describe('Utility Functions', () => {
+        it('should generate correct initials', () => {
+            expect(manager.getInitials('María Financiera')).toBe('MF')
+            expect(manager.getInitials('Juan')).toBe('J')
+            expect(manager.getInitials('Ana María López')).toBe('AM')
+            expect(manager.getInitials('')).toBe('')
+        })
+
+        it('should detect mobile viewport correctly', () => {
+            mockMobileViewport()
+            expect(manager.isMobile()).toBe(true)
+
+            mockDesktopViewport()
+            expect(manager.isMobile()).toBe(false)
+        })
     })
 
-    it('should set default bot correctly', () => {
-      manager.setDefaultBot('juan-inversion')
-      
-      expect(manager.bots[0].isDefault).toBe(false) // María
-      expect(manager.bots[1].isDefault).toBe(true)  // Juan
-      expect(manager.bots[2].isDefault).toBe(false) // Ana
-    })
-  })
+    describe('Local Storage Integration', () => {
+        it('should load bots from localStorage', () => {
+            setupLocalStorageWithBots(mockBots)
 
-  describe('Utility Functions', () => {
-    it('should generate correct initials', () => {
-      expect(manager.getInitials('María Financiera')).toBe('MF')
-      expect(manager.getInitials('Juan')).toBe('J')
-      expect(manager.getInitials('Ana María López')).toBe('AM')
-      expect(manager.getInitials('')).toBe('')
-    })
+            manager.loadBots()
 
-    it('should detect mobile viewport correctly', () => {
-      mockMobileViewport()
-      expect(manager.isMobile()).toBe(true)
-      
-      mockDesktopViewport()
-      expect(manager.isMobile()).toBe(false)
-    })
-  })
+            expect(manager.bots).toEqual(mockBots)
+            expect(localStorage.getItem).toHaveBeenCalledWith('chatbaseBots')
+        })
 
-  describe('Local Storage Integration', () => {
-    it('should load bots from localStorage', () => {
-      setupLocalStorageWithBots(mockBots)
-      
-      manager.loadBots()
-      
-      expect(manager.bots).toEqual(mockBots)
-      expect(localStorage.getItem).toHaveBeenCalledWith('chatbaseBots')
-    })
+        it('should handle localStorage errors gracefully', () => {
+            localStorage.getItem.mockImplementation(() => {
+                throw new Error('Storage error')
+            })
 
-    it('should handle localStorage errors gracefully', () => {
-      localStorage.getItem.mockImplementation(() => {
-        throw new Error('Storage error')
-      })
-      
-      manager.loadBots()
-      
-      expect(manager.bots).toEqual([])
-      expect(console.error).toHaveBeenCalledWith('Error loading bots:', expect.any(Error))
-    })
+            manager.loadBots()
 
-    it('should save bots to localStorage', () => {
-      manager.bots = mockBots
-      
-      manager.saveBots()
-      
-      expect(localStorage.setItem).toHaveBeenCalledWith('chatbaseBots', JSON.stringify(mockBots))
-    })
+            expect(manager.bots).toEqual([])
+            expect(console.error).toHaveBeenCalledWith('Error loading bots:', expect.any(Error))
+        })
 
-    it('should handle invalid JSON in localStorage', () => {
-      localStorage.getItem.mockReturnValue('invalid json')
-      
-      manager.loadBots()
-      
-      expect(manager.bots).toEqual([])
-      expect(console.error).toHaveBeenCalled()
+        it('should save bots to localStorage', () => {
+            manager.bots = mockBots
+
+            manager.saveBots()
+
+            expect(localStorage.setItem).toHaveBeenCalledWith(
+                'chatbaseBots',
+                JSON.stringify(mockBots)
+            )
+        })
+
+        it('should handle invalid JSON in localStorage', () => {
+            localStorage.getItem.mockReturnValue('invalid json')
+
+            manager.loadBots()
+
+            expect(manager.bots).toEqual([])
+            expect(console.error).toHaveBeenCalled()
+        })
     })
-  })
 })
 
 describe('ChatbaseManager - Validation', () => {
-  let manager
+    let manager
 
-  beforeEach(() => {
-    manager = new mockChatbaseManagerClass()
-  })
-
-  describe('File Import Validation', () => {
-    it('should validate file existence', () => {
-      expect(manager.validateImportFile(null)).toBe(false)
-      expect(alert).toHaveBeenCalledWith('Por favor selecciona un archivo JSON')
+    beforeEach(() => {
+        manager = new mockChatbaseManagerClass()
     })
 
-    it('should validate file extension', () => {
-      const txtFile = createMockFile('content', 'test.txt', 'text/plain')
-      expect(manager.validateImportFile(txtFile)).toBe(false)
-      expect(alert).toHaveBeenCalledWith('El archivo debe ser de tipo JSON')
+    describe('File Import Validation', () => {
+        it('should validate file existence', () => {
+            expect(manager.validateImportFile(null)).toBe(false)
+            expect(alert).toHaveBeenCalledWith('Por favor selecciona un archivo JSON')
+        })
+
+        it('should validate file extension', () => {
+            const txtFile = createMockFile('content', 'test.txt', 'text/plain')
+            expect(manager.validateImportFile(txtFile)).toBe(false)
+            expect(alert).toHaveBeenCalledWith('El archivo debe ser de tipo JSON')
+        })
+
+        it('should accept valid JSON file', () => {
+            const jsonFile = createMockFile('{}', 'test.json', 'application/json')
+            expect(manager.validateImportFile(jsonFile)).toBe(true)
+        })
     })
 
-    it('should accept valid JSON file', () => {
-      const jsonFile = createMockFile('{}', 'test.json', 'application/json')
-      expect(manager.validateImportFile(jsonFile)).toBe(true)
-    })
-  })
+    describe('Import Data Validation', () => {
+        it('should reject non-array data', () => {
+            expect(manager.validateImportData({})).toBe(false)
+            expect(alert).toHaveBeenCalledWith('El archivo JSON debe contener un array de bots')
+        })
 
-  describe('Import Data Validation', () => {
-    it('should reject non-array data', () => {
-      expect(manager.validateImportData({})).toBe(false)
-      expect(alert).toHaveBeenCalledWith('El archivo JSON debe contener un array de bots')
-    })
+        it('should validate bot structure', () => {
+            expect(manager.validateImportData(invalidBots)).toBe(false)
+            expect(alert).toHaveBeenCalledWith("El campo 'name' es requerido en todos los bots")
+        })
 
-    it('should validate bot structure', () => {
-      expect(manager.validateImportData(invalidBots)).toBe(false)
-      expect(alert).toHaveBeenCalledWith(expect.stringContaining('formato correcto'))
-    })
+        it('should accept valid bot data', () => {
+            expect(manager.validateImportData(mockBots)).toBe(true)
+        })
 
-    it('should accept valid bot data', () => {
-      expect(manager.validateImportData(mockBots)).toBe(true)
-    })
+        it('should handle bots with null avatar', () => {
+            const botsWithNullAvatar = [
+                {
+                    id: 'test',
+                    name: 'Test Bot',
+                    description: 'Test Description',
+                    chatbaseId: 'TEST123',
+                    avatar: null,
+                    isDefault: false,
+                },
+            ]
 
-    it('should handle bots with null avatar', () => {
-      const botsWithNullAvatar = [{
-        id: 'test',
-        name: 'Test Bot',
-        description: 'Test Description',
-        chatbaseId: 'TEST123',
-        avatar: null,
-        isDefault: false
-      }]
-      
-      expect(manager.validateImportData(botsWithNullAvatar)).toBe(true)
-    })
-  })
-
-  describe('Form Validation', () => {
-    it('should validate required form fields', () => {
-      const incompleteForm = {
-        name: 'Test Bot',
-        description: '',
-        chatbaseId: 'TEST123'
-      }
-      
-      expect(manager.validateBotForm(incompleteForm)).toBe(false)
-      expect(alert).toHaveBeenCalledWith('Por favor, completa todos los campos obligatorios')
+            expect(manager.validateImportData(botsWithNullAvatar)).toBe(true)
+        })
     })
 
-    it('should accept complete form data', () => {
-      const completeForm = {
-        name: 'Test Bot',
-        description: 'Test Description',
-        chatbaseId: 'TEST123',
-        avatar: 'https://example.com/avatar.jpg'
-      }
-      
-      expect(manager.validateBotForm(completeForm)).toBe(true)
-    })
+    describe('Form Validation', () => {
+        it('should validate required form fields', () => {
+            const incompleteForm = {
+                name: 'Test Bot',
+                description: '',
+                chatbaseId: 'TEST123',
+            }
 
-    it('should create bot from form data correctly', () => {
-      const formData = {
-        name: 'María Elena',
-        description: 'Experta en finanzas',
-        chatbaseId: 'ME123',
-        avatar: 'https://example.com/maria.jpg'
-      }
-      
-      const bot = manager.createBotFromForm(formData)
-      
-      expect(bot).toEqual({
-        id: 'maría-elena',
-        name: 'María Elena',
-        description: 'Experta en finanzas',
-        chatbaseId: 'ME123',
-        avatar: 'https://example.com/maria.jpg',
-        isDefault: false
-      })
-    })
+            expect(manager.validateBotForm(incompleteForm)).toBe(false)
+            expect(alert).toHaveBeenCalledWith('La descripción es requerida')
+        })
 
-    it('should handle empty avatar in form', () => {
-      const formData = {
-        name: 'Test Bot',
-        description: 'Test Description',
-        chatbaseId: 'TEST123',
-        avatar: ''
-      }
-      
-      const bot = manager.createBotFromForm(formData)
-      expect(bot.avatar).toBeNull()
+        it('should accept complete form data', () => {
+            const completeForm = {
+                name: 'Test Bot',
+                description: 'Test Description',
+                chatbaseId: 'TEST123',
+                avatar: 'https://example.com/avatar.jpg',
+            }
+
+            expect(manager.validateBotForm(completeForm)).toBe(true)
+        })
+
+        it('should create bot from form data correctly', () => {
+            const formData = {
+                name: 'María Elena',
+                description: 'Experta en finanzas',
+                chatbaseId: 'ME123',
+                avatar: 'https://example.com/maria.jpg',
+            }
+
+            const bot = manager.createBotFromForm(formData)
+
+            expect(bot).toEqual({
+                id: 'maría-elena',
+                name: 'María Elena',
+                description: 'Experta en finanzas',
+                chatbaseId: 'ME123',
+                avatar: 'https://example.com/maria.jpg',
+                isDefault: false,
+            })
+        })
+
+        it('should handle empty avatar in form', () => {
+            const formData = {
+                name: 'Test Bot',
+                description: 'Test Description',
+                chatbaseId: 'TEST123',
+                avatar: '',
+            }
+
+            const bot = manager.createBotFromForm(formData)
+            expect(bot.avatar).toBeNull()
+        })
     })
-  })
 })

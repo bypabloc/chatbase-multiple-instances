@@ -1,11 +1,14 @@
 import '@testing-library/jest-dom'
 
+// Mock uno.css import
+vi.mock('uno.css', () => ({}))
+
 // Mock localStorage
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
 }
 
 global.localStorage = localStorageMock
@@ -16,34 +19,34 @@ global.confirm = vi.fn(() => true)
 
 // Mock console methods as spies
 global.console = {
-  ...console,
-  log: vi.fn(),
-  error: vi.fn(),
-  warn: vi.fn(),
+    ...console,
+    log: vi.fn(),
+    error: vi.fn(),
+    warn: vi.fn(),
 }
 
 // Mock Image constructor for avatar loading tests
 global.Image = class {
-  constructor() {
-    setTimeout(() => {
-      this.onload?.()
-    }, 0)
-  }
+    constructor() {
+        setTimeout(() => {
+            this.onload?.()
+        }, 0)
+    }
 }
 
 // Mock Vercel Analytics
 vi.mock('@vercel/analytics', () => ({
-  inject: vi.fn()
+    inject: vi.fn(),
 }))
 
 // Reset all mocks before each test
 beforeEach(() => {
-  vi.clearAllMocks()
-  localStorageMock.getItem.mockReturnValue(null)
-  document.body.innerHTML = ''
-  
-  // Create base HTML structure for tests
-  document.body.innerHTML = `
+    vi.clearAllMocks()
+    localStorageMock.getItem.mockReturnValue(null)
+    document.body.innerHTML = ''
+
+    // Create base HTML structure for tests
+    document.body.innerHTML = `
     <div class="container">
       <div class="header">
         <span class="badge">EXPERTOS QUE TE APOYAN</span>
