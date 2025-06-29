@@ -89,161 +89,174 @@ const STYLES = {
 /**
  * Helper functions for ID generation and element creation
  */
-class ElementHelper {
-    /**
-     * Generate a unique ID for an element
-     * @param {string} prefix - Prefix for the ID
-     * @param {string} suffix - Suffix for the ID (optional)
-     * @returns {string} Unique ID
-     */
-    static generateId(prefix, suffix = '') {
-        const timestamp = Date.now()
-        const random = Math.random().toString(36).substr(2, 9)
-        return suffix ? `${prefix}-${suffix}-${random}` : `${prefix}-${timestamp}-${random}`
-    }
 
-    /**
-     * Create element with ID and classes
-     * @param {string} tag - HTML tag name
-     * @param {string} id - Element ID
-     * @param {string} className - CSS classes
-     * @returns {HTMLElement} Created element
-     */
-    static createElement(tag, id, className = '') {
-        const element = document.createElement(tag)
-        element.id = id
-        if (className) element.className = className
-        return element
-    }
+/**
+ * Generate a unique ID for an element
+ * @param {string} prefix - Prefix for the ID
+ * @param {string} suffix - Suffix for the ID (optional)
+ * @returns {string} Unique ID
+ */
+function generateId(prefix, suffix = '') {
+    const timestamp = Date.now()
+    const random = Math.random().toString(36).substr(2, 9)
+    return suffix ? `${prefix}-${suffix}-${random}` : `${prefix}-${timestamp}-${random}`
+}
 
-    /**
-     * Create icon element
-     * @param {string} iconClass - Icon class (e.g., 'i-heroicons-star')
-     * @param {string} id - Element ID
-     * @param {string} size - Size classes (e.g., 'w-4 h-4')
-     * @returns {HTMLElement} Icon element
-     */
-    static createIcon(iconClass, id, size = 'w-4 h-4') {
-        const icon = document.createElement('div')
-        icon.id = id
-        icon.className = `${iconClass} ${size}`
-        return icon
+/**
+ * Create element with ID and classes
+ * @param {string} tag - HTML tag name
+ * @param {string} id - Element ID
+ * @param {string} className - CSS classes
+ * @returns {HTMLElement} Created element
+ */
+function createElement(tag, id, className = '') {
+    const element = document.createElement(tag)
+    element.id = id
+    if (className) element.className = className
+    return element
+}
+
+/**
+ * Create icon element
+ * @param {string} iconClass - Icon class (e.g., 'i-heroicons-star')
+ * @param {string} id - Element ID
+ * @param {string} size - Size classes (e.g., 'w-4 h-4')
+ * @returns {HTMLElement} Icon element
+ */
+function createIcon(iconClass, id, size = 'w-4 h-4') {
+    const icon = document.createElement('div')
+    icon.id = id
+    icon.className = `${iconClass} ${size}`
+    return icon
+}
+
+// Export helper functions as an object for backward compatibility
+const ElementHelper = {
+    generateId,
+    createElement,
+    createIcon,
+}
+
+/**
+ * Validation helper functions for form and data validation
+ */
+
+/**
+ * Check if a string is a valid URL
+ * @param {string} url - URL to validate
+ * @returns {boolean} True if valid URL
+ */
+function isValidUrl(url) {
+    try {
+        new URL(url)
+        return true
+    } catch {
+        return false
     }
 }
 
 /**
- * Validation helper class for form and data validation
+ * Validate bot form data
+ * @param {Object} formData - Form data to validate
+ * @returns {Object} Validation result with isValid and errors
  */
-class ValidationHelper {
-    /**
-     * Validate bot form data
-     * @param {Object} formData - Form data to validate
-     * @returns {Object} Validation result with isValid and errors
-     */
-    static validateBotForm(formData) {
-        const errors = []
+function validateBotForm(formData) {
+    const errors = []
 
-        if (!formData.name?.trim()) {
-            errors.push('El nombre es requerido')
-        }
+    if (!formData.name?.trim()) {
+        errors.push('El nombre es requerido')
+    }
 
-        if (!formData.description?.trim()) {
-            errors.push('La descripción es requerida')
-        }
+    if (!formData.description?.trim()) {
+        errors.push('La descripción es requerida')
+    }
 
-        if (!formData.chatbaseId?.trim()) {
-            errors.push('El ID de Chatbase es requerido')
-        }
+    if (!formData.chatbaseId?.trim()) {
+        errors.push('El ID de Chatbase es requerido')
+    }
 
-        if (formData.avatar && !ValidationHelper.isValidUrl(formData.avatar)) {
-            errors.push('La URL del avatar no es válida')
-        }
+    if (formData.avatar && !isValidUrl(formData.avatar)) {
+        errors.push('La URL del avatar no es válida')
+    }
 
+    return {
+        isValid: errors.length === 0,
+        errors,
+    }
+}
+
+/**
+ * Validate imported bot data
+ * @param {Array} importedData - Data to validate
+ * @returns {Object} Validation result
+ */
+function validateImportData(importedData) {
+    if (!Array.isArray(importedData)) {
         return {
-            isValid: errors.length === 0,
-            errors,
+            isValid: false,
+            error: 'El archivo JSON debe contener un array de bots',
         }
     }
 
-    /**
-     * Validate imported bot data
-     * @param {Array} importedData - Data to validate
-     * @returns {Object} Validation result
-     */
-    static validateImportData(importedData) {
-        if (!Array.isArray(importedData)) {
+    const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
+
+    for (const bot of importedData) {
+        if (!bot || typeof bot !== 'object') {
             return {
                 isValid: false,
-                error: 'El archivo JSON debe contener un array de bots',
+                error: 'Cada elemento debe ser un objeto válido',
             }
         }
 
-        const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
-
-        for (const bot of importedData) {
-            if (!bot || typeof bot !== 'object') {
+        for (const field of requiredFields) {
+            if (!(field in bot)) {
                 return {
                     isValid: false,
-                    error: 'Cada elemento debe ser un objeto válido',
-                }
-            }
-
-            for (const field of requiredFields) {
-                if (!(field in bot)) {
-                    return {
-                        isValid: false,
-                        error: `El campo '${field}' es requerido en todos los bots`,
-                    }
-                }
-            }
-
-            if (typeof bot.isDefault !== 'boolean') {
-                return {
-                    isValid: false,
-                    error: 'El campo isDefault debe ser true o false',
+                    error: `El campo '${field}' es requerido en todos los bots`,
                 }
             }
         }
 
-        return { isValid: true }
-    }
-
-    /**
-     * Check if a string is a valid URL
-     * @param {string} url - URL to validate
-     * @returns {boolean} True if valid URL
-     */
-    static isValidUrl(url) {
-        try {
-            new URL(url)
-            return true
-        } catch {
-            return false
-        }
-    }
-
-    /**
-     * Validate file for import
-     * @param {File} file - File to validate
-     * @returns {Object} Validation result
-     */
-    static validateImportFile(file) {
-        if (!file) {
+        if (typeof bot.isDefault !== 'boolean') {
             return {
                 isValid: false,
-                error: 'Por favor selecciona un archivo JSON',
+                error: 'El campo isDefault debe ser true o false',
             }
         }
-
-        if (!file.name.toLowerCase().endsWith('.json')) {
-            return {
-                isValid: false,
-                error: 'El archivo debe ser de tipo JSON',
-            }
-        }
-
-        return { isValid: true }
     }
+
+    return { isValid: true }
+}
+
+/**
+ * Validate file for import
+ * @param {File} file - File to validate
+ * @returns {Object} Validation result
+ */
+function validateImportFile(file) {
+    if (!file) {
+        return {
+            isValid: false,
+            error: 'Por favor selecciona un archivo JSON',
+        }
+    }
+
+    if (!file.name.toLowerCase().endsWith('.json')) {
+        return {
+            isValid: false,
+            error: 'El archivo debe ser de tipo JSON',
+        }
+    }
+
+    return { isValid: true }
+}
+
+// Export validation functions as an object for backward compatibility
+const ValidationHelper = {
+    validateBotForm,
+    validateImportData,
+    isValidUrl,
+    validateImportFile,
 }
 
 /**
@@ -308,45 +321,80 @@ class ChatbaseManager {
      * Update all active chat instances when screen size changes
      */
     updateChatInstancesForResize() {
+        const isMobile = this.isMobile()
         let hasVisibleInstance = false
 
-        Object.keys(this.chatInstances).forEach(botId => {
+        // Process each chat instance
+        for (const botId of Object.keys(this.chatInstances)) {
             const instance = this.chatInstances[botId]
-            if (instance && instance.container) {
-                // Store current visibility state
-                const wasVisible = instance.isVisible
-
-                // Update container styles only for responsive design
-                const containerStyles = this.isMobile()
-                    ? STYLES.CHAT_CONTAINER_MOBILE
-                    : STYLES.CHAT_CONTAINER_DESKTOP
-
-                // Apply new styles while preserving visibility state
-                instance.container.style.cssText = containerStyles
-
-                // If instance was hidden, make sure it stays hidden
-                if (!wasVisible) {
-                    instance.container.style.display = 'none'
-                }
-
-                // Find and update iframe container
-                const iframeContainer = instance.container.querySelector(
-                    `#chatbase-iframe-container-${botId}`
-                )
-                if (iframeContainer) {
-                    iframeContainer.style.cssText = this.isMobile()
-                        ? STYLES.IFRAME_CONTAINER_MOBILE
-                        : STYLES.IFRAME_CONTAINER
-                }
-
-                // Check if this instance is visible
-                if (instance.isVisible) {
-                    hasVisibleInstance = true
-                }
+            if (instance?.container) {
+                hasVisibleInstance =
+                    this.updateSingleInstance(instance, botId, isMobile) || hasVisibleInstance
             }
-        })
+        }
 
         // Update mobile scroll based on visible instances
+        this.updateMobileScroll(hasVisibleInstance)
+    }
+
+    /**
+     * Update a single chat instance for resize
+     * @param {Object} instance - Chat instance to update
+     * @param {string} botId - Bot ID
+     * @param {boolean} isMobile - Whether in mobile view
+     * @returns {boolean} Whether instance is visible
+     */
+    updateSingleInstance(instance, botId, isMobile) {
+        const wasVisible = instance.isVisible
+
+        // Update container styles
+        this.updateContainerStyles(instance.container, isMobile, wasVisible)
+
+        // Update iframe container if exists
+        this.updateIframeContainer(instance.container, botId, isMobile)
+
+        return instance.isVisible
+    }
+
+    /**
+     * Update container styles based on device type
+     * @param {HTMLElement} container - Container element
+     * @param {boolean} isMobile - Whether in mobile view
+     * @param {boolean} wasVisible - Previous visibility state
+     */
+    updateContainerStyles(container, isMobile, wasVisible) {
+        const containerStyles = isMobile
+            ? STYLES.CHAT_CONTAINER_MOBILE
+            : STYLES.CHAT_CONTAINER_DESKTOP
+
+        container.style.cssText = containerStyles
+
+        // Preserve hidden state
+        if (!wasVisible) {
+            container.style.display = 'none'
+        }
+    }
+
+    /**
+     * Update iframe container styles
+     * @param {HTMLElement} container - Parent container
+     * @param {string} botId - Bot ID
+     * @param {boolean} isMobile - Whether in mobile view
+     */
+    updateIframeContainer(container, botId, isMobile) {
+        const iframeContainer = container.querySelector(`#chatbase-iframe-container-${botId}`)
+        if (iframeContainer) {
+            iframeContainer.style.cssText = isMobile
+                ? STYLES.IFRAME_CONTAINER_MOBILE
+                : STYLES.IFRAME_CONTAINER
+        }
+    }
+
+    /**
+     * Update mobile scroll based on visible instances
+     * @param {boolean} hasVisibleInstance - Whether any instance is visible
+     */
+    updateMobileScroll(hasVisibleInstance) {
         if (hasVisibleInstance) {
             this.disableMobileScroll()
         } else {
@@ -592,7 +640,7 @@ class ChatbaseManager {
             }
         }
         img.onerror = () => {
-            console.log(`Could not load avatar for ${bot.name}`)
+            // Avatar loading failed silently
         }
         img.src = bot.avatar
     }
@@ -672,10 +720,10 @@ class ChatbaseManager {
      * @param {string} botId - Internal bot ID
      */
     openChatbase(chatbotId, botId) {
-        console.log(`Opening chatbase for bot: ${botId}, chatbotId: ${chatbotId}`)
+        // Opening chatbase for bot
 
         if (this.isTransitioning) {
-            console.log('Transition in progress, ignoring click')
+            // Transition in progress, ignoring click
             return
         }
 
@@ -686,7 +734,7 @@ class ChatbaseManager {
             return
         }
 
-        console.log('Creating new instance')
+        // Creating new instance
         this.handleNewInstance(chatbotId, botId, button)
     }
 
@@ -696,13 +744,13 @@ class ChatbaseManager {
      */
     handleExistingInstance(botId) {
         const instance = this.chatInstances[botId]
-        console.log(`Existing instance found. Visible: ${instance.isVisible}`)
+        // Existing instance found
 
         if (instance.isVisible) {
-            console.log('Minimizing visible instance')
+            // Minimizing visible instance
             this.minimizeChatInstance(botId)
         } else {
-            console.log('Restoring minimized instance')
+            // Restoring minimized instance
             this.restoreChatInstance(botId)
         }
     }
@@ -720,7 +768,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            console.log(`Minimizing previous instance: ${this.currentBotId}`)
+            // Minimizing previous instance
             this.minimizeChatInstance(this.currentBotId)
         }
 
@@ -754,7 +802,7 @@ class ChatbaseManager {
      * @param {string} state - State: 'active', 'minimized', 'loading', 'default'
      */
     updateButtonState(botId, state) {
-        console.log(`Updating button state for bot: ${botId}, state: ${state}`)
+        // Updating button state
 
         const button = document.getElementById(`btn-${botId}`)
         const bot = this.bots.find(b => b.id === botId)
@@ -807,7 +855,7 @@ class ChatbaseManager {
                 }
         }
 
-        console.log(`Button updated for ${bot.name}`)
+        // Button updated
     }
 
     /**
@@ -1040,7 +1088,7 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     minimizeChatInstance(botId) {
-        console.log(`Minimizing chat instance for bot: ${botId}`)
+        // Minimizing chat instance
 
         const instance = this.chatInstances[botId]
         if (!instance) {
@@ -1073,12 +1121,12 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      * @param {string} botId - Bot ID
      */
-    hideInstance(instance, botId) {
+    hideInstance(instance, _botId) {
         if (instance.outsideClickHandler) {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
 
-        console.log(`Hiding container for bot ${botId}`)
+        // Hiding container
         instance.container.style.display = 'none'
         instance.isVisible = false
 
@@ -1102,7 +1150,7 @@ class ChatbaseManager {
         }
 
         this.updateFloatingChatButton()
-        console.log(`Bot ${botId} ${isVisible ? 'restored' : 'minimized'} successfully`)
+        // Bot state updated successfully
     }
 
     /**
@@ -1110,7 +1158,7 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     restoreChatInstance(botId) {
-        console.log(`Restoring chat instance for bot: ${botId}`)
+        // Restoring chat instance
 
         const instance = this.chatInstances[botId]
         if (!instance) {
@@ -1139,7 +1187,7 @@ class ChatbaseManager {
             this.chatInstances[this.currentBotId] &&
             this.chatInstances[this.currentBotId].isVisible
         ) {
-            console.log(`Minimizing previous visible instance: ${this.currentBotId}`)
+            // Minimizing previous visible instance
             this.minimizeChatInstance(this.currentBotId)
         }
     }
@@ -1156,7 +1204,7 @@ class ChatbaseManager {
             delete this.chatInstances[botId]
             const bot = this.bots.find(b => b.id === botId)
             if (bot) {
-                console.log(`Recreating instance for bot: ${botId}`)
+                // Recreating instance
                 this.createChatInstance(bot.chatbaseId, botId)
             }
             return false
@@ -1169,8 +1217,8 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      * @param {string} botId - Bot ID
      */
-    showInstance(instance, botId) {
-        console.log(`Restoring bot ${botId}, display before:`, instance.container.style.display)
+    showInstance(instance, _botId) {
+        // Restoring bot instance
 
         // Disable mobile scroll when chat instance is shown/restored
         this.disableMobileScroll()
@@ -1179,11 +1227,7 @@ class ChatbaseManager {
         instance.container.style.visibility = 'visible'
         instance.isVisible = true
 
-        console.log(`Display after change:`, instance.container.style.display)
-        console.log(
-            `Container visible on screen:`,
-            instance.container.offsetWidth > 0 && instance.container.offsetHeight > 0
-        )
+        // Display updated
     }
 
     /**
@@ -1350,7 +1394,7 @@ class ChatbaseManager {
             this.updateFloatingChatButton()
             this.updateButtonStates()
 
-            console.log('All bots deleted')
+            // All bots deleted
         } catch (error) {
             console.error('Error deleting bots:', error)
         }
@@ -1440,7 +1484,7 @@ class ChatbaseManager {
         this.updateButtonStates()
 
         alert(`Se importaron ${importedData.length} bot(s) correctamente`)
-        console.log('Data imported successfully:', importedData)
+        // Data imported successfully
     }
 
     /**
@@ -1658,6 +1702,9 @@ class ChatbaseManager {
      * Debug function to inspect chat instances state
      */
     debugChatInstances() {
+        // Only run in development
+        if (import.meta.env.PROD) return
+
         console.log('=== Chat Instances Debug ===')
         console.log('Current Bot ID:', this.currentBotId)
         console.log('Use Iframe Mode:', CONFIG.IFRAME_MODE)
@@ -1698,5 +1745,5 @@ window.debugChatInstances = () => chatManager.debugChatInstances()
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('Chatbase Manager initialized')
+    // Chatbase Manager initialized
 })
