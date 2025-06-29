@@ -696,6 +696,11 @@ class ChatbaseManager {
      */
     createOutsideClickHandler(chatContainer, botId) {
         return event => {
+            // Disable outside click handler on mobile devices
+            if (this.isMobile()) {
+                return
+            }
+
             if (!chatContainer.contains(event.target)) {
                 this.minimizeChatInstance(botId)
                 document.removeEventListener('click', this.chatInstances[botId].outsideClickHandler)
