@@ -1,4 +1,5 @@
 import { inject } from '@vercel/analytics'
+import 'uno.css'
 
 inject()
 
