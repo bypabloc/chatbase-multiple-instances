@@ -315,6 +315,23 @@ class ChatbaseManager {
 
         this.resizeTimeout = setTimeout(() => {
             this.updateChatInstancesForResize()
+
+            // Handle carousel for mobile/desktop switch
+            const isMobile = this.isMobile()
+            const carouselControls = document.getElementById('carouselControls')
+
+            if (isMobile && this.bots.length > 0) {
+                // Initialize carousel for mobile
+                this.initializeCarousel()
+                if (carouselControls) {
+                    carouselControls.style.display = 'flex'
+                }
+            } else {
+                // Hide carousel controls on desktop
+                if (carouselControls) {
+                    carouselControls.style.display = 'none'
+                }
+            }
         }, 100)
     }
 
@@ -413,6 +430,12 @@ class ChatbaseManager {
             this.renderExperts()
             this.updateFloatingChatButton()
             this.updateButtonStates()
+
+            // Initialize carousel if on mobile after loading bots
+            if (this.isMobile() && this.bots.length > 0) {
+                // Small delay to ensure DOM is ready
+                setTimeout(() => this.initializeCarousel(), 100)
+            }
         } catch (error) {
             logger.error('Error loading bots:', error)
             this.bots = []
@@ -600,6 +623,11 @@ class ChatbaseManager {
             grid.appendChild(card)
             this.loadBotAvatar(bot)
         })
+
+        // Initialize carousel if on mobile
+        if (this.isMobile()) {
+            this.initializeCarousel()
+        }
     }
 
     /**
@@ -1729,6 +1757,219 @@ class ChatbaseManager {
             logger.log('- Chatbot ID:', instance.chatbotId)
         })
         logger.log('=======================')
+    }
+
+    /**
+     * Initialize carousel functionality for mobile
+     */
+    initializeCarousel() {
+        this.currentCarouselIndex = 0
+        this.cleanupCarouselListeners()
+        this.setupCarouselControls()
+        this.setupCarouselScrollListener()
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Cleanup carousel event listeners
+     */
+    cleanupCarouselListeners() {
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+        const grid = document.getElementById('expertsGrid')
+
+        // Remove old event listeners by cloning elements
+        if (prevButton) {
+            const newPrev = prevButton.cloneNode(true)
+            prevButton.parentNode.replaceChild(newPrev, prevButton)
+        }
+
+        if (nextButton) {
+            const newNext = nextButton.cloneNode(true)
+            nextButton.parentNode.replaceChild(newNext, nextButton)
+        }
+
+        if (grid && this.scrollListener) {
+            grid.removeEventListener('scroll', this.scrollListener)
+            this.scrollListener = null
+        }
+    }
+
+    /**
+     * Setup carousel control buttons
+     */
+    setupCarouselControls() {
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+
+        if (prevButton) {
+            prevButton.addEventListener('click', () => this.navigateCarousel('prev'))
+        }
+
+        if (nextButton) {
+            nextButton.addEventListener('click', () => this.navigateCarousel('next'))
+        }
+
+        // Generate dot indicators
+        this.generateCarouselDots()
+    }
+
+    /**
+     * Generate carousel dot indicators
+     */
+    generateCarouselDots() {
+        const dotsContainer = document.getElementById('carouselDots')
+        if (!dotsContainer) {
+            logger.error('Carousel dots container not found')
+            return
+        }
+
+        dotsContainer.innerHTML = ''
+
+        logger.log(`Generating ${this.bots.length} carousel dots`)
+
+        this.bots.forEach((_, index) => {
+            const dot = document.createElement('button')
+            dot.type = 'button'
+            dot.className =
+                'w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-300 hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+            dot.setAttribute('aria-label', `Go to slide ${index + 1}`)
+            dot.setAttribute('data-carousel-dot', index)
+            dot.addEventListener('click', () => this.goToCarouselSlide(index))
+            dotsContainer.appendChild(dot)
+        })
+
+        // Set initial active dot
+        if (dotsContainer.children[0]) {
+            dotsContainer.children[0].className =
+                'w-6 h-2 rounded bg-brand-blue dark:bg-blue-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+        }
+    }
+
+    /**
+     * Setup scroll listener for carousel
+     */
+    setupCarouselScrollListener() {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        let isScrolling = null
+
+        this.scrollListener = () => {
+            // Clear our timeout throughout the scroll
+            window.clearTimeout(isScrolling)
+
+            // Set a timeout to run after scrolling ends
+            isScrolling = setTimeout(() => {
+                this.updateCarouselOnScroll()
+            }, 66)
+        }
+
+        grid.addEventListener('scroll', this.scrollListener)
+    }
+
+    /**
+     * Update carousel index based on scroll position
+     */
+    updateCarouselOnScroll() {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        const cards = grid.querySelectorAll(':scope > div')
+        if (cards.length === 0) return
+
+        const scrollLeft = grid.scrollLeft
+        const containerWidth = grid.offsetWidth
+
+        // Find which card is most visible
+        let closestIndex = 0
+        let closestDistance = Infinity
+
+        cards.forEach((card, index) => {
+            const cardLeft = card.offsetLeft - grid.offsetLeft
+            const cardCenter = cardLeft + card.offsetWidth / 2
+            const containerCenter = scrollLeft + containerWidth / 2
+            const distance = Math.abs(cardCenter - containerCenter)
+
+            if (distance < closestDistance) {
+                closestDistance = distance
+                closestIndex = index
+            }
+        })
+
+        this.currentCarouselIndex = closestIndex
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Navigate carousel
+     * @param {string} direction - 'prev' or 'next'
+     */
+    navigateCarousel(direction) {
+        const totalSlides = this.bots.length
+
+        if (direction === 'prev') {
+            this.currentCarouselIndex = Math.max(0, this.currentCarouselIndex - 1)
+        } else {
+            this.currentCarouselIndex = Math.min(totalSlides - 1, this.currentCarouselIndex + 1)
+        }
+
+        this.goToCarouselSlide(this.currentCarouselIndex)
+    }
+
+    /**
+     * Go to specific carousel slide
+     * @param {number} index - Slide index
+     */
+    goToCarouselSlide(index) {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        const cards = grid.querySelectorAll(':scope > div')
+        if (cards[index]) {
+            cards[index].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center',
+            })
+        }
+
+        this.currentCarouselIndex = index
+        this.updateCarouselIndicators()
+    }
+
+    /**
+     * Update carousel indicators (dots and buttons)
+     */
+    updateCarouselIndicators() {
+        // Update dots
+        const dotsContainer = document.getElementById('carouselDots')
+        if (dotsContainer) {
+            const dots = dotsContainer.querySelectorAll('button[data-carousel-dot]')
+            dots.forEach((dot, index) => {
+                if (index === this.currentCarouselIndex) {
+                    // Active state
+                    dot.className =
+                        'w-6 h-2 rounded bg-brand-blue dark:bg-blue-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+                } else {
+                    // Inactive state
+                    dot.className =
+                        'w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600 transition-all duration-300 hover:bg-gray-400 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 dark:focus:ring-blue-500'
+                }
+            })
+        }
+
+        // Update prev/next buttons
+        const prevButton = document.getElementById('carouselPrev')
+        const nextButton = document.getElementById('carouselNext')
+
+        if (prevButton) {
+            prevButton.disabled = this.currentCarouselIndex === 0
+        }
+
+        if (nextButton) {
+            nextButton.disabled = this.currentCarouselIndex === this.bots.length - 1
+        }
     }
 }
 

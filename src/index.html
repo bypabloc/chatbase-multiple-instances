@@ -30,8 +30,29 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-12" id="expertsGrid">
-            <!-- Los expertos se cargarán dinámicamente aquí -->
+        <div class="relative" id="expertsContainer">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 mt-12 max-md:overflow-hidden max-md:relative" id="expertsGrid">
+                <!-- Los expertos se cargarán dinámicamente aquí -->
+            </div>
+            
+            <!-- Carousel controls for mobile -->
+            <div class="hidden max-md:flex flex-col items-center mt-6 gap-4" id="carouselControls">
+                <!-- Navigation buttons -->
+                <div class="flex items-center gap-4" id="carouselNavigation">
+                    <button class="w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" id="carouselPrev" aria-label="Previous">
+                        <div class="i-heroicons-chevron-left w-5 h-5 text-gray-600 dark:text-gray-300"></div>
+                    </button>
+                    
+                    <!-- Dot indicators -->
+                    <div class="flex items-center gap-2" id="carouselDots">
+                        <!-- Dots will be generated dynamically -->
+                    </div>
+                    
+                    <button class="w-10 h-10 bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-full flex items-center justify-center transition-all duration-300 hover:bg-gray-50 dark:hover:bg-slate-600 hover:border-gray-300 dark:hover:border-gray-500 disabled:opacity-50 disabled:cursor-not-allowed" id="carouselNext" aria-label="Next">
+                        <div class="i-heroicons-chevron-right w-5 h-5 text-gray-600 dark:text-gray-300"></div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -78,6 +78,48 @@
         transition: transform 150ms ease-out !important;
     }
 
+    /* Carousel styles for mobile */
+    @media (max-width: 768px) {
+        #expertsGrid {
+            display: flex !important;
+            overflow-x: auto !important;
+            scroll-snap-type: x mandatory !important;
+            scroll-behavior: smooth !important;
+            -webkit-overflow-scrolling: touch !important;
+            gap: 1rem !important;
+            padding: 0 1rem !important;
+            margin-left: -1rem !important;
+            margin-right: -1rem !important;
+            scrollbar-width: none !important;
+            -ms-overflow-style: none !important;
+        }
+
+        #expertsGrid::-webkit-scrollbar {
+            display: none !important;
+        }
+
+        #expertsGrid > div {
+            flex: 0 0 calc(100% - 3rem) !important;
+            max-width: calc(100% - 3rem) !important;
+            scroll-snap-align: center !important;
+            margin: 0 !important;
+        }
+
+        #expertsGrid > div:first-child {
+            margin-left: 1.5rem !important;
+        }
+
+        #expertsGrid > div:last-child {
+            margin-right: 1.5rem !important;
+        }
+
+        #carouselControls {
+            display: flex !important;
+        }
+    }
+
+    /* Carousel styles - classes are defined in UnoCSS safelist */
+
     /* Dark mode styles */
     .dark body {
         background-color: #0f172a;
