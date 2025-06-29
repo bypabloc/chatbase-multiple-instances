@@ -493,5 +493,50 @@ describe('High Coverage Tests - Missing Functions', () => {
             expect(document.body.style.overflow).toBe('')
             expect(document.body.style.position).toBe('')
         })
+
+        it('should disable outside click on mobile', () => {
+            // Mock mobile detection
+            chatManager.isMobile = vi.fn().mockReturnValue(true)
+
+            const mockContainer = document.createElement('div')
+            const handler = chatManager.createOutsideClickHandler(mockContainer, 'test-bot')
+
+            // Create a spy for minimizeChatInstance
+            const minimizeSpy = vi.spyOn(chatManager, 'minimizeChatInstance')
+
+            // Simulate click outside container
+            const outsideElement = document.createElement('div')
+            const mockEvent = { target: outsideElement }
+
+            handler(mockEvent)
+
+            // Should NOT minimize on mobile
+            expect(minimizeSpy).not.toHaveBeenCalled()
+        })
+
+        it('should allow outside click on desktop', () => {
+            // Mock desktop detection
+            chatManager.isMobile = vi.fn().mockReturnValue(false)
+
+            // Setup mock instance
+            const mockContainer = document.createElement('div')
+            chatManager.chatInstances['test-bot'] = {
+                outsideClickHandler: vi.fn(),
+            }
+
+            const handler = chatManager.createOutsideClickHandler(mockContainer, 'test-bot')
+
+            // Create a spy for minimizeChatInstance
+            const minimizeSpy = vi.spyOn(chatManager, 'minimizeChatInstance')
+
+            // Simulate click outside container
+            const outsideElement = document.createElement('div')
+            const mockEvent = { target: outsideElement }
+
+            handler(mockEvent)
+
+            // Should minimize on desktop
+            expect(minimizeSpy).toHaveBeenCalledWith('test-bot')
+        })
     })
 })
