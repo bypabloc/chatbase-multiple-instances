@@ -2,86 +2,97 @@
  * Integration tests for DOM interactions and events
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { screen, fireEvent, waitFor } from '@testing-library/dom'
-import userEvent from '@testing-library/user-event'
-import { 
-  mockBots, 
-  setupLocalStorageWithBots,
-  createMockClickEvent,
-  assertElementStyles,
-  waitForDOM
-} from './helpers.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createMockClickEvent, mockBots, setupLocalStorageWithBots, waitForDOM } from './helpers.js'
+
+// Mock window.matchMedia for theme system
+Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+    })),
+})
 
 // Mock the full ChatbaseManager for DOM testing
 const mockChatbaseManagerClass = class ChatbaseManager {
-  constructor() {
-    this.bots = []
-    this.chatInstances = {}
-    this.currentBotId = null
-    this.lastMinimizedBotId = null
-    this.isTransitioning = false
-    this.init()
-  }
-
-  init() {
-    this.loadBots()
-    this.setupEventListeners()
-  }
-
-  setupEventListeners() {
-    window.addEventListener('beforeunload', () => this.cleanupAllInstances())
-    window.onclick = (event) => this.handleModalClick(event)
-  }
-
-  handleModalClick(event) {
-    const modal = document.getElementById('configModal')
-    if (event.target === modal) {
-      this.closeConfig()
+    constructor() {
+        this.bots = []
+        this.chatInstances = {}
+        this.currentBotId = null
+        this.lastMinimizedBotId = null
+        this.isTransitioning = false
+        this.init()
     }
-  }
 
-  loadBots() {
-    try {
-      const savedBots = localStorage.getItem('chatbaseBots')
-      this.bots = savedBots ? JSON.parse(savedBots) : []
-      this.renderExperts()
-      this.updateFloatingChatButton()
-    } catch (error) {
-      console.error('Error loading bots:', error)
-      this.bots = []
-      this.renderExperts()
-      this.updateFloatingChatButton()
+    init() {
+        this.loadBots()
+        this.setupEventListeners()
     }
-  }
 
-  saveBots() {
-    localStorage.setItem('chatbaseBots', JSON.stringify(this.bots))
-  }
+    setupEventListeners() {
+        window.addEventListener('beforeunload', () => this.cleanupAllInstances())
+        window.onclick = event => this.handleModalClick(event)
+    }
 
-  getInitials(name) {
-    return name.split(' ').map(word => word[0]).join('').slice(0, 2)
-  }
+    handleModalClick(event) {
+        const modal = document.getElementById('configModal')
+        if (event.target === modal) {
+            this.closeConfig()
+        }
+    }
 
-  renderExperts() {
-    const grid = document.getElementById('expertsGrid')
-    if (!grid) return
-    
-    grid.innerHTML = ''
+    loadBots() {
+        try {
+            const savedBots = localStorage.getItem('chatbaseBots')
+            this.bots = savedBots ? JSON.parse(savedBots) : []
+            this.renderExperts()
+            this.updateFloatingChatButton()
+        } catch (error) {
+            console.error('Error loading bots:', error)
+            this.bots = []
+            this.renderExperts()
+            this.updateFloatingChatButton()
+        }
+    }
 
-    this.bots.forEach(bot => {
-      const card = this.createExpertCard(bot)
-      grid.appendChild(card)
-      this.loadBotAvatar(bot)
-    })
-  }
+    saveBots() {
+        localStorage.setItem('chatbaseBots', JSON.stringify(this.bots))
+    }
 
-  createExpertCard(bot) {
-    const card = document.createElement('div')
-    card.className = 'expert-card'
-    card.setAttribute('data-testid', `expert-card-${bot.id}`)
-    
-    card.innerHTML = `
+    getInitials(name) {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .slice(0, 2)
+    }
+
+    renderExperts() {
+        const grid = document.getElementById('expertsGrid')
+        if (!grid) return
+
+        grid.innerHTML = ''
+
+        this.bots.forEach(bot => {
+            const card = this.createExpertCard(bot)
+            grid.appendChild(card)
+            this.loadBotAvatar(bot)
+        })
+    }
+
+    createExpertCard(bot) {
+        const card = document.createElement('div')
+        card.className = 'expert-card'
+        card.setAttribute('data-testid', `expert-card-${bot.id}`)
+
+        card.innerHTML = `
       <div class="avatar-container">
         <div id="avatar-${bot.id}" class="avatar-fallback">${this.getInitials(bot.name)}</div>
       </div>
@@ -96,185 +107,194 @@ const mockChatbaseManagerClass = class ChatbaseManager {
         HABLAR CON ${bot.name.toUpperCase()}
       </button>
     `
-    
-    return card
-  }
 
-  loadBotAvatar(bot) {
-    if (!bot.avatar) return
-
-    const img = new Image()
-    img.onload = () => {
-      const avatarDiv = document.getElementById(`avatar-${bot.id}`)
-      if (avatarDiv) {
-        avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`
-      }
+        return card
     }
-    img.onerror = () => {
-      console.log(`Could not load avatar for ${bot.name}`)
+
+    loadBotAvatar(bot) {
+        if (!bot.avatar) return
+
+        const img = new Image()
+        img.onload = () => {
+            const avatarDiv = document.getElementById(`avatar-${bot.id}`)
+            if (avatarDiv) {
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`
+            }
+        }
+        img.onerror = () => {
+            console.log(`Could not load avatar for ${bot.name}`)
+        }
+        img.src = bot.avatar
     }
-    img.src = bot.avatar
-  }
 
-  updateFloatingChatButton() {
-    this.removeFloatingButton()
-    
-    if (this.currentBotId || !this.bots || this.bots.length === 0) return
+    updateFloatingChatButton() {
+        this.removeFloatingButton()
 
-    const targetBot = this.getTargetBotForFloatingButton()
-    if (targetBot) {
-      const buttonText = `Abrir ${targetBot.name}`
-      this.createFloatingChatButton(targetBot, buttonText)
+        if (this.currentBotId || !this.bots || this.bots.length === 0) return
+
+        const targetBot = this.getTargetBotForFloatingButton()
+        if (targetBot) {
+            const buttonText = `Abrir ${targetBot.name}`
+            this.createFloatingChatButton(targetBot, buttonText)
+        }
     }
-  }
 
-  getTargetBotForFloatingButton() {
-    if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
-      return this.bots.find(b => b.id === this.lastMinimizedBotId)
+    getTargetBotForFloatingButton() {
+        if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
+            return this.bots.find(b => b.id === this.lastMinimizedBotId)
+        }
+        return this.getDefaultBot()
     }
-    return this.getDefaultBot()
-  }
 
-  getDefaultBot() {
-    if (!this.bots || this.bots.length === 0) return null
-    return this.bots.find(bot => bot.isDefault) || this.bots[0]
-  }
+    getDefaultBot() {
+        if (!this.bots || this.bots.length === 0) return null
+        return this.bots.find(bot => bot.isDefault) || this.bots[0]
+    }
 
-  removeFloatingButton() {
-    const existingButton = document.getElementById('floating-chat-button')
-    if (existingButton) existingButton.remove()
-  }
+    removeFloatingButton() {
+        const existingButton = document.getElementById('floating-chat-button')
+        if (existingButton) existingButton.remove()
+    }
 
-  createFloatingChatButton(bot, buttonText) {
-    const floatingButton = document.createElement('button')
-    floatingButton.id = 'floating-chat-button'
-    floatingButton.title = buttonText
-    floatingButton.className = 'floating-chat-button floating-chat-button-right'
-    floatingButton.setAttribute('data-testid', 'floating-chat-button')
-    
-    floatingButton.innerHTML = `
+    createFloatingChatButton(bot, buttonText) {
+        const floatingButton = document.createElement('button')
+        floatingButton.id = 'floating-chat-button'
+        floatingButton.title = buttonText
+        floatingButton.className = 'floating-chat-button floating-chat-button-right'
+        floatingButton.setAttribute('data-testid', 'floating-chat-button')
+
+        floatingButton.innerHTML = `
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path d="M21 15C21 15.5304 20.7893 16.0391 20.4142 16.4142C20.0391 16.7893 19.5304 17 19 17H7L3 21V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     `
-    
-    floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
-    document.body.appendChild(floatingButton)
-  }
 
-  handleFloatingButtonClick(bot) {
-    if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
-      this.restoreChatInstance(this.lastMinimizedBotId)
-    } else {
-      this.openChatbase(bot.chatbaseId, bot.id)
+        floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
+        document.body.appendChild(floatingButton)
     }
-  }
 
-  openChatbase(chatbotId, botId) {
-    console.log(`Opening chatbase for bot: ${botId}`)
-    // Mock implementation for testing
-    this.currentBotId = botId
-    this.updateFloatingChatButton()
-  }
-
-  openConfig() {
-    const modal = document.getElementById('configModal')
-    if (modal) {
-      modal.classList.add('active')
-      this.renderBotList()
+    handleFloatingButtonClick(bot) {
+        if (this.lastMinimizedBotId && this.chatInstances[this.lastMinimizedBotId]) {
+            this.restoreChatInstance(this.lastMinimizedBotId)
+        } else {
+            this.openChatbase(bot.chatbaseId, bot.id)
+        }
     }
-  }
 
-  closeConfig() {
-    const modal = document.getElementById('configModal')
-    if (modal) {
-      modal.classList.remove('active')
+    openChatbase(_chatbotId, botId) {
+        console.log(`Opening chatbase for bot: ${botId}`)
+        // Mock implementation for testing
+        this.currentBotId = botId
+        this.updateFloatingChatButton()
     }
-  }
 
-  renderBotList() {
-    const botList = document.getElementById('botList')
-    if (!botList) return
-    
-    botList.innerHTML = '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>'
+    openConfig() {
+        const modal = document.getElementById('configModal')
+        if (modal) {
+            modal.classList.add('active')
+            this.renderBotList()
+        }
+    }
 
-    this.bots.forEach((bot, index) => {
-      const botItem = this.createBotListItem(bot, index)
-      botList.appendChild(botItem)
-    })
-  }
+    closeConfig() {
+        const modal = document.getElementById('configModal')
+        if (modal) {
+            modal.classList.remove('active')
+        }
+    }
 
-  createBotListItem(bot, index) {
-    const botItem = document.createElement('div')
-    botItem.className = 'bot-item'
-    botItem.setAttribute('data-testid', `bot-item-${bot.id}`)
-    
-    botItem.innerHTML = `
+    renderBotList() {
+        const botList = document.getElementById('botList')
+        if (!botList) return
+
+        botList.innerHTML =
+            '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>'
+
+        this.bots.forEach((bot, index) => {
+            const botItem = this.createBotListItem(bot, index)
+            botList.appendChild(botItem)
+        })
+    }
+
+    createBotListItem(bot, index) {
+        const botItem = document.createElement('div')
+        botItem.className = 'bot-item'
+        botItem.setAttribute('data-testid', `bot-item-${bot.id}`)
+
+        // Apply different styles for default bot
+        const borderClass = bot.isDefault
+            ? 'border-2 border-brand-blue bg-slate-50'
+            : 'border border-gray-100 bg-white'
+
+        botItem.className += ` ${borderClass}`
+
+        botItem.innerHTML = `
+      ${bot.isDefault ? '<div class="default-badge">POR DEFECTO</div>' : ''}
       <div class="bot-info">
         <div class="bot-name">${bot.name}</div>
         <div class="bot-id">ID: ${bot.chatbaseId}</div>
         ${bot.avatar ? '<div class="bot-id">Avatar: Personalizado</div>' : '<div class="bot-id">Avatar: Iniciales</div>'}
       </div>
       <div class="bot-controls">
-        <label class="default-radio-label">
-          <input 
-            type="radio" 
-            name="defaultBot" 
-            value="${bot.id}" 
-            ${bot.isDefault ? 'checked' : ''} 
-            onchange="chatManager.setDefaultBot('${bot.id}')" 
-            class="default-radio"
-            data-testid="default-radio-${bot.id}"
-          >
-          <span class="radio-text">Por defecto</span>
-        </label>
+        <button 
+          class="set-default-btn" 
+          onclick="chatManager.setDefaultBot('${bot.id}')"
+          data-testid="set-default-button-${bot.id}"
+          ${bot.isDefault ? 'style="display: none;"' : ''}
+        >
+          ⭐
+        </button>
         <button 
           class="delete-bot" 
           onclick="chatManager.deleteBot(${index})"
           data-testid="delete-button-${bot.id}"
         >
-          Eliminar
+          🗑️
         </button>
       </div>
     `
-    return botItem
-  }
-
-  setDefaultBot(botId) {
-    this.bots.forEach(bot => {
-      bot.isDefault = (bot.id === botId)
-    })
-    this.saveBots()
-    this.updateFloatingChatButton()
-    this.renderBotList() // Re-render to update radio buttons
-  }
-
-  deleteBot(index) {
-    if (!confirm('¿Estás seguro de que quieres eliminar este bot?')) return
-    
-    const botToDelete = this.bots[index]
-    
-    if (botToDelete && this.chatInstances[botToDelete.id]) {
-      // Mock cleanup
-      delete this.chatInstances[botToDelete.id]
+        return botItem
     }
-    
-    this.bots.splice(index, 1)
-    this.saveBots()
-    this.renderExperts()
-    this.renderBotList()
-  }
 
-  restoreChatInstance() { /* Mock */ }
-  cleanupAllInstances() { /* Mock */ }
+    setDefaultBot(botId) {
+        this.bots.forEach(bot => {
+            bot.isDefault = bot.id === botId
+        })
+        this.saveBots()
+        this.updateFloatingChatButton()
+        this.renderBotList() // Re-render to update radio buttons
+    }
+
+    deleteBot(index) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este bot?')) return
+
+        const botToDelete = this.bots[index]
+
+        if (botToDelete && this.chatInstances[botToDelete.id]) {
+            // Mock cleanup
+            delete this.chatInstances[botToDelete.id]
+        }
+
+        this.bots.splice(index, 1)
+        this.saveBots()
+        this.renderExperts()
+        this.renderBotList()
+    }
+
+    restoreChatInstance() {
+        /* Mock */
+    }
+    cleanupAllInstances() {
+        /* Mock */
+    }
 }
 
 describe('DOM Integration Tests', () => {
-  let manager
+    let manager
 
-  beforeEach(() => {
-    // Create fresh DOM structure
-    document.body.innerHTML = `
+    beforeEach(() => {
+        // Create fresh DOM structure
+        document.body.innerHTML = `
       <div class="container">
         <div class="header">
           <span class="badge">EXPERTOS QUE TE APOYAN</span>
@@ -302,212 +322,211 @@ describe('DOM Integration Tests', () => {
       </div>
     `
 
-    setupLocalStorageWithBots(mockBots)
-    manager = new mockChatbaseManagerClass()
-  })
-
-  describe('Expert Grid Rendering', () => {
-    it('should render expert cards correctly', () => {
-      const expertCards = document.querySelectorAll('[data-testid^="expert-card-"]')
-      expect(expertCards).toHaveLength(3)
-
-      // Check first expert card content
-      const mariaCard = document.querySelector('[data-testid="expert-card-maria-financiera"]')
-      expect(mariaCard).toBeInTheDocument()
-      expect(mariaCard).toHaveTextContent('María Financiera')
-      expect(mariaCard).toHaveTextContent('Experta en finanzas personales')
-      expect(mariaCard).toHaveTextContent('HABLAR CON MARÍA FINANCIERA')
+        setupLocalStorageWithBots(mockBots)
+        manager = new mockChatbaseManagerClass()
     })
 
-    it('should generate correct initials for avatars', () => {
-      const mariaAvatar = document.getElementById('avatar-maria-financiera')
-      const juanAvatar = document.getElementById('avatar-juan-inversion')
-      
-      expect(mariaAvatar).toHaveTextContent('MF')
-      expect(juanAvatar).toHaveTextContent('JI')
+    describe('Expert Grid Rendering', () => {
+        it('should render expert cards correctly', () => {
+            const expertCards = document.querySelectorAll('[data-testid^="expert-card-"]')
+            expect(expertCards).toHaveLength(3)
+
+            // Check first expert card content
+            const mariaCard = document.querySelector('[data-testid="expert-card-maria-financiera"]')
+            expect(mariaCard).toBeInTheDocument()
+            expect(mariaCard).toHaveTextContent('María Financiera')
+            expect(mariaCard).toHaveTextContent('Experta en finanzas personales')
+            expect(mariaCard).toHaveTextContent('HABLAR CON MARÍA FINANCIERA')
+        })
+
+        it('should generate correct initials for avatars', () => {
+            const mariaAvatar = document.getElementById('avatar-maria-financiera')
+            const juanAvatar = document.getElementById('avatar-juan-inversion')
+
+            expect(mariaAvatar).toHaveTextContent('MF')
+            expect(juanAvatar).toHaveTextContent('JI')
+        })
+
+        it('should create talk buttons with correct IDs', () => {
+            const mariaButton = document.getElementById('btn-maria-financiera')
+            const juanButton = document.getElementById('btn-juan-inversion')
+
+            expect(mariaButton).toBeInTheDocument()
+            expect(juanButton).toBeInTheDocument()
+            expect(mariaButton).toHaveClass('talk-button')
+        })
     })
 
-    it('should create talk buttons with correct IDs', () => {
-      const mariaButton = document.getElementById('btn-maria-financiera')
-      const juanButton = document.getElementById('btn-juan-inversion')
-      
-      expect(mariaButton).toBeInTheDocument()
-      expect(juanButton).toBeInTheDocument()
-      expect(mariaButton).toHaveClass('talk-button')
-    })
-  })
+    describe('Floating Chat Button', () => {
+        it('should create floating button when no chat is active', () => {
+            const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
+            expect(floatingButton).toBeInTheDocument()
+            expect(floatingButton).toHaveClass('floating-chat-button-right')
+        })
 
-  describe('Floating Chat Button', () => {
-    it('should create floating button when no chat is active', () => {
-      const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
-      expect(floatingButton).toBeInTheDocument()
-      expect(floatingButton).toHaveClass('floating-chat-button-right')
-    })
+        it('should remove floating button when chat is active', () => {
+            manager.currentBotId = 'maria-financiera'
+            manager.updateFloatingChatButton()
 
-    it('should remove floating button when chat is active', () => {
-      manager.currentBotId = 'maria-financiera'
-      manager.updateFloatingChatButton()
-      
-      const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
-      expect(floatingButton).not.toBeInTheDocument()
+            const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
+            expect(floatingButton).not.toBeInTheDocument()
+        })
+
+        it('should show correct bot name in floating button title', () => {
+            const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
+            expect(floatingButton.title).toBe('Abrir María Financiera')
+        })
     })
 
-    it('should show correct bot name in floating button title', () => {
-      const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
-      expect(floatingButton.title).toBe('Abrir María Financiera')
-    })
-  })
+    describe('Modal Functionality', () => {
+        it('should open configuration modal', () => {
+            const modal = document.getElementById('configModal')
+            expect(modal).not.toHaveClass('active')
 
-  describe('Modal Functionality', () => {
-    it('should open configuration modal', () => {
-      const modal = document.getElementById('configModal')
-      expect(modal).not.toHaveClass('active')
-      
-      manager.openConfig()
-      
-      expect(modal).toHaveClass('active')
-    })
+            manager.openConfig()
 
-    it('should close configuration modal', () => {
-      const modal = document.getElementById('configModal')
-      modal.classList.add('active')
-      
-      manager.closeConfig()
-      
-      expect(modal).not.toHaveClass('active')
-    })
+            expect(modal).toHaveClass('active')
+        })
 
-    it('should close modal when clicking outside', () => {
-      const modal = document.getElementById('configModal')
-      modal.classList.add('active')
-      
-      // Create event that targets the modal itself (outside the content)
-      const clickEvent = { target: modal }
-      manager.handleModalClick(clickEvent)
-      
-      expect(modal).not.toHaveClass('active')
-    })
+        it('should close configuration modal', () => {
+            const modal = document.getElementById('configModal')
+            modal.classList.add('active')
 
-    it('should not close modal when clicking inside content', () => {
-      const modal = document.getElementById('configModal')
-      const modalContent = modal.querySelector('.modal-content')
-      modal.classList.add('active')
-      
-      const clickEvent = createMockClickEvent(modalContent)
-      manager.handleModalClick(clickEvent)
-      
-      expect(modal).toHaveClass('active')
-    })
-  })
+            manager.closeConfig()
 
-  describe('Bot List in Configuration', () => {
-    beforeEach(() => {
-      manager.openConfig()
+            expect(modal).not.toHaveClass('active')
+        })
+
+        it('should close modal when clicking outside', () => {
+            const modal = document.getElementById('configModal')
+            modal.classList.add('active')
+
+            // Create event that targets the modal itself (outside the content)
+            const clickEvent = { target: modal }
+            manager.handleModalClick(clickEvent)
+
+            expect(modal).not.toHaveClass('active')
+        })
+
+        it('should not close modal when clicking inside content', () => {
+            const modal = document.getElementById('configModal')
+            const modalContent = modal.querySelector('.modal-content')
+            modal.classList.add('active')
+
+            const clickEvent = createMockClickEvent(modalContent)
+            manager.handleModalClick(clickEvent)
+
+            expect(modal).toHaveClass('active')
+        })
     })
 
-    it('should render bot list correctly', () => {
-      const botItems = document.querySelectorAll('[data-testid^="bot-item-"]')
-      expect(botItems).toHaveLength(3)
-      
-      const mariaItem = document.querySelector('[data-testid="bot-item-maria-financiera"]')
-      expect(mariaItem).toHaveTextContent('María Financiera')
-      expect(mariaItem).toHaveTextContent('ID: ABC123')
-      expect(mariaItem).toHaveTextContent('Avatar: Personalizado')
+    describe('Bot List in Configuration', () => {
+        beforeEach(() => {
+            manager.openConfig()
+        })
+
+        it('should render bot list correctly', () => {
+            const botItems = document.querySelectorAll('[data-testid^="bot-item-"]')
+            expect(botItems).toHaveLength(3)
+
+            const mariaItem = document.querySelector('[data-testid="bot-item-maria-financiera"]')
+            expect(mariaItem).toHaveTextContent('María Financiera')
+            expect(mariaItem).toHaveTextContent('ID: ABC123')
+            expect(mariaItem).toHaveTextContent('Avatar: Personalizado')
+        })
+
+        it('should show default badge for default bot', () => {
+            const mariaItem = document.querySelector('[data-testid="bot-item-maria-financiera"]')
+            const juanItem = document.querySelector('[data-testid="bot-item-juan-inversion"]')
+
+            expect(mariaItem).toHaveTextContent('POR DEFECTO')
+            expect(juanItem).not.toHaveTextContent('POR DEFECTO')
+        })
+
+        it('should change default bot when star button is clicked', () => {
+            // Simulate star button click
+            manager.setDefaultBot('juan-inversion')
+
+            expect(manager.bots[0].isDefault).toBe(false) // María
+            expect(manager.bots[1].isDefault).toBe(true) // Juan
+        })
+
+        it('should show delete buttons for all bots', () => {
+            const deleteButtons = document.querySelectorAll('[data-testid^="delete-button-"]')
+            expect(deleteButtons).toHaveLength(3)
+
+            deleteButtons.forEach(button => {
+                expect(button).toHaveClass('delete-bot')
+            })
+        })
     })
 
-    it('should show default radio button checked for default bot', () => {
-      const mariaRadio = document.querySelector('[data-testid="default-radio-maria-financiera"]')
-      const juanRadio = document.querySelector('[data-testid="default-radio-juan-inversion"]')
-      
-      expect(mariaRadio).toBeChecked()
-      expect(juanRadio).not.toBeChecked()
+    describe('Chat Interaction', () => {
+        it('should handle talk button click', () => {
+            const consoleSpy = vi.spyOn(console, 'log')
+            const _mariaButton = document.querySelector(
+                '[data-testid="talk-button-maria-financiera"]'
+            )
+
+            // Simulate button click by calling openChatbase directly
+            manager.openChatbase('ABC123', 'maria-financiera')
+
+            expect(consoleSpy).toHaveBeenCalledWith('Opening chatbase for bot: maria-financiera')
+            expect(manager.currentBotId).toBe('maria-financiera')
+        })
+
+        it('should update floating button after opening chat', () => {
+            manager.openChatbase('ABC123', 'maria-financiera')
+
+            const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
+            expect(floatingButton).not.toBeInTheDocument()
+        })
     })
 
-    it('should change default bot when radio button is selected', () => {
-      const juanRadio = document.querySelector('[data-testid="default-radio-juan-inversion"]')
-      
-      // Simulate radio button change
-      manager.setDefaultBot('juan-inversion')
-      
-      expect(manager.bots[0].isDefault).toBe(false) // María
-      expect(manager.bots[1].isDefault).toBe(true)  // Juan
+    describe('Avatar Loading', () => {
+        it('should attempt to load custom avatars', async () => {
+            // This will trigger the avatar loading for María who has a custom avatar
+            expect(document.getElementById('avatar-maria-financiera')).toHaveTextContent('MF')
+
+            // Wait for image load mock to complete
+            await waitForDOM()
+
+            // Since we're mocking Image onload, the avatar should be replaced
+            // In a real scenario, this would become an <img> element
+        })
+
+        it('should keep initials fallback when avatar fails to load', () => {
+            // Juan has no avatar, so should keep initials
+            const juanAvatar = document.getElementById('avatar-juan-inversion')
+            expect(juanAvatar).toHaveTextContent('JI')
+            expect(juanAvatar).toHaveClass('avatar-fallback')
+        })
     })
 
-    it('should show delete buttons for all bots', () => {
-      const deleteButtons = document.querySelectorAll('[data-testid^="delete-button-"]')
-      expect(deleteButtons).toHaveLength(3)
-      
-      deleteButtons.forEach(button => {
-        expect(button).toHaveTextContent('Eliminar')
-        expect(button).toHaveClass('delete-bot')
-      })
-    })
-  })
+    describe('Bot Management Operations', () => {
+        beforeEach(() => {
+            manager.openConfig()
+        })
 
-  describe('Chat Interaction', () => {
-    it('should handle talk button click', () => {
-      const consoleSpy = vi.spyOn(console, 'log')
-      const mariaButton = document.querySelector('[data-testid="talk-button-maria-financiera"]')
-      
-      // Simulate button click by calling openChatbase directly
-      manager.openChatbase('ABC123', 'maria-financiera')
-      
-      expect(consoleSpy).toHaveBeenCalledWith('Opening chatbase for bot: maria-financiera')
-      expect(manager.currentBotId).toBe('maria-financiera')
-    })
+        it('should delete bot when confirmed', () => {
+            const initialCount = manager.bots.length
+            confirm.mockReturnValue(true)
 
-    it('should update floating button after opening chat', () => {
-      manager.openChatbase('ABC123', 'maria-financiera')
-      
-      const floatingButton = document.querySelector('[data-testid="floating-chat-button"]')
-      expect(floatingButton).not.toBeInTheDocument()
-    })
-  })
+            manager.deleteBot(1) // Delete Juan
 
-  describe('Avatar Loading', () => {
-    it('should attempt to load custom avatars', async () => {
-      // This will trigger the avatar loading for María who has a custom avatar
-      expect(document.getElementById('avatar-maria-financiera')).toHaveTextContent('MF')
-      
-      // Wait for image load mock to complete
-      await waitForDOM()
-      
-      // Since we're mocking Image onload, the avatar should be replaced
-      // In a real scenario, this would become an <img> element
-    })
+            expect(manager.bots).toHaveLength(initialCount - 1)
+            expect(manager.bots.find(b => b.id === 'juan-inversion')).toBeUndefined()
+            expect(localStorage.setItem).toHaveBeenCalled()
+        })
 
-    it('should keep initials fallback when avatar fails to load', () => {
-      // Juan has no avatar, so should keep initials
-      const juanAvatar = document.getElementById('avatar-juan-inversion')
-      expect(juanAvatar).toHaveTextContent('JI')
-      expect(juanAvatar).toHaveClass('avatar-fallback')
-    })
-  })
+        it('should not delete bot when cancelled', () => {
+            const initialCount = manager.bots.length
+            confirm.mockReturnValue(false)
 
-  describe('Bot Management Operations', () => {
-    beforeEach(() => {
-      manager.openConfig()
-    })
+            manager.deleteBot(1)
 
-    it('should delete bot when confirmed', () => {
-      const initialCount = manager.bots.length
-      confirm.mockReturnValue(true)
-      
-      manager.deleteBot(1) // Delete Juan
-      
-      expect(manager.bots).toHaveLength(initialCount - 1)
-      expect(manager.bots.find(b => b.id === 'juan-inversion')).toBeUndefined()
-      expect(localStorage.setItem).toHaveBeenCalled()
+            expect(manager.bots).toHaveLength(initialCount)
+            expect(manager.bots.find(b => b.id === 'juan-inversion')).toBeDefined()
+        })
     })
-
-    it('should not delete bot when cancelled', () => {
-      const initialCount = manager.bots.length
-      confirm.mockReturnValue(false)
-      
-      manager.deleteBot(1)
-      
-      expect(manager.bots).toHaveLength(initialCount)
-      expect(manager.bots.find(b => b.id === 'juan-inversion')).toBeDefined()
-    })
-  })
 })
