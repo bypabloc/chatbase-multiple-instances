@@ -462,6 +462,50 @@ describe('High Coverage Tests - Missing Functions', () => {
             expect(mockContainer.style.cssText).toBeDefined()
         })
 
+        it('should preserve hidden state during resize', async () => {
+            // Setup multiple chat instances - one visible, one hidden
+            const visibleContainer = document.createElement('div')
+            const hiddenContainer = document.createElement('div')
+
+            const visibleIframe = document.createElement('div')
+            const hiddenIframe = document.createElement('div')
+
+            visibleIframe.id = 'chatbase-iframe-container-visible-bot'
+            hiddenIframe.id = 'chatbase-iframe-container-hidden-bot'
+
+            visibleContainer.appendChild(visibleIframe)
+            hiddenContainer.appendChild(hiddenIframe)
+
+            document.body.appendChild(visibleContainer)
+            document.body.appendChild(hiddenContainer)
+
+            chatManager.chatInstances['visible-bot'] = {
+                container: visibleContainer,
+                isVisible: true,
+            }
+
+            chatManager.chatInstances['hidden-bot'] = {
+                container: hiddenContainer,
+                isVisible: false,
+            }
+
+            // Initially hide the hidden container
+            hiddenContainer.style.display = 'none'
+
+            chatManager.handleResize()
+
+            // Wait for throttled resize handler
+            await new Promise(resolve => setTimeout(resolve, 200))
+
+            // Verify visible container is still visible
+            expect(chatManager.chatInstances['visible-bot'].isVisible).toBe(true)
+            expect(visibleContainer.style.display).not.toBe('none')
+
+            // Verify hidden container stays hidden
+            expect(chatManager.chatInstances['hidden-bot'].isVisible).toBe(false)
+            expect(hiddenContainer.style.display).toBe('none')
+        })
+
         it('should disable mobile scroll when chat opens', () => {
             // Mock mobile detection
             chatManager.isMobile = vi.fn().mockReturnValue(true)

@@ -150,10 +150,21 @@ class ChatbaseManager {
         Object.keys(this.chatInstances).forEach(botId => {
             const instance = this.chatInstances[botId]
             if (instance && instance.container) {
-                // Update container styles
-                instance.container.style.cssText = this.isMobile()
+                // Store current visibility state
+                const wasVisible = instance.isVisible
+
+                // Update container styles only for responsive design
+                const containerStyles = this.isMobile()
                     ? STYLES.CHAT_CONTAINER_MOBILE
                     : STYLES.CHAT_CONTAINER_DESKTOP
+
+                // Apply new styles while preserving visibility state
+                instance.container.style.cssText = containerStyles
+
+                // If instance was hidden, make sure it stays hidden
+                if (!wasVisible) {
+                    instance.container.style.display = 'none'
+                }
 
                 // Find and update iframe container
                 const iframeContainer = instance.container.querySelector(
