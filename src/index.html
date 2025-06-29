@@ -42,15 +42,16 @@
 
     <!-- Modal de Configuración -->
     <div class="hidden fixed top-0 left-0 w-full h-full bg-black/50 z-[2000] animate-fade-in [&.active]:flex [&.active]:items-center [&.active]:justify-center" id="configModal">
-        <div class="bg-white rounded-2xl p-8 max-w-[600px] w-[90%] max-h-[80vh] overflow-y-auto animate-slide-in scrollbar-modern" id="modal-content">
-            <div class="flex justify-between items-center mb-5" id="modal-header">
+        <div class="bg-white rounded-2xl max-w-[600px] w-[90%] max-h-[80vh] overflow-y-auto animate-slide-in scrollbar-modern m-4 md:m-8" id="modal-content">
+            <div class="p-8 space-y-6" id="modal-content-wrapper">
+            <div class="flex justify-between items-center" id="modal-header">
                 <h2 class="text-2xl font-bold text-slate-800" id="modal-title">Configuración de Bots</h2>
                 <button class="bg-transparent border-none cursor-pointer text-slate-500 p-1 transition-colors duration-300 hover:text-slate-800 flex items-center justify-center" onclick="closeConfig()" id="modal-close-button">
                     <div class="i-heroicons-x-mark w-6 h-6" id="modal-close-icon"></div>
                 </button>
             </div>
 
-            <div class="mb-5" id="botList">
+            <div id="botList">
                 <!-- Lista de bots se cargará aquí -->
             </div>
 
@@ -75,7 +76,7 @@
                 <button class="bg-brand-blue text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-brand-blue-dark" onclick="addBot()" id="add-bot-button">Agregar Bot</button>
             </div>
             
-            <div class="mt-5 pt-5 border-t border-gray-200" id="advanced-options-section">
+            <div class="pt-6 border-t border-gray-200" id="advanced-options-section">
                 <h3 class="mb-4 text-lg text-slate-800 font-semibold" id="advanced-options-title">Opciones avanzadas</h3>
                 
                 <!-- Theme Switch -->
@@ -111,6 +112,7 @@
                         <span id="clear-all-text">Eliminar todos los bots</span>
                     </button>
                 </div>
+            </div>
             </div>
         </div>
     </div>
