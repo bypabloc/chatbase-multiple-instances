@@ -41,6 +41,7 @@ export default defineConfig({
         'hover:scale-105',
         'active:scale-95',
         // Floating button classes
+        'fixed',
         'w-16',
         'h-16',
         'bottom-6',
