@@ -1992,3 +1992,6 @@ window.debugChatInstances = () => chatManager.debugChatInstances()
 document.addEventListener('DOMContentLoaded', () => {
     logger.log('Chatbase Manager initialized')
 })
+
+// Export for testing
+export { ChatbaseManager, chatManager }
