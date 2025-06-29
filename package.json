@@ -18,7 +18,7 @@
         "format": "biome format --write ./src",
         "check": "biome check --write ./src",
         "ci:check": "biome ci ./src",
-        "validate": "pnpm run lint && pnpm run format --check ./src && pnpm run test:coverage && pnpm run build",
+        "validate": "pnpm run lint && pnpm run ci:check && pnpm run test:coverage && pnpm run build",
         "validate:fix": "pnpm run check && pnpm run test:coverage && pnpm run build",
         "prepush": "pnpm ci:check && pnpm test:coverage",
         "pkg:reinstall": "rm -rf node_modules pnpm-lock.yaml dist && pnpm store prune && pnpm install",
