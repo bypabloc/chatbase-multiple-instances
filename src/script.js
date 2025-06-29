@@ -87,6 +87,166 @@ const STYLES = {
 }
 
 /**
+ * Helper functions for ID generation and element creation
+ */
+class ElementHelper {
+    /**
+     * Generate a unique ID for an element
+     * @param {string} prefix - Prefix for the ID
+     * @param {string} suffix - Suffix for the ID (optional)
+     * @returns {string} Unique ID
+     */
+    static generateId(prefix, suffix = '') {
+        const timestamp = Date.now()
+        const random = Math.random().toString(36).substr(2, 9)
+        return suffix ? `${prefix}-${suffix}-${random}` : `${prefix}-${timestamp}-${random}`
+    }
+
+    /**
+     * Create element with ID and classes
+     * @param {string} tag - HTML tag name
+     * @param {string} id - Element ID
+     * @param {string} className - CSS classes
+     * @returns {HTMLElement} Created element
+     */
+    static createElement(tag, id, className = '') {
+        const element = document.createElement(tag)
+        element.id = id
+        if (className) element.className = className
+        return element
+    }
+
+    /**
+     * Create icon element
+     * @param {string} iconClass - Icon class (e.g., 'i-heroicons-star')
+     * @param {string} id - Element ID
+     * @param {string} size - Size classes (e.g., 'w-4 h-4')
+     * @returns {HTMLElement} Icon element
+     */
+    static createIcon(iconClass, id, size = 'w-4 h-4') {
+        const icon = document.createElement('div')
+        icon.id = id
+        icon.className = `${iconClass} ${size}`
+        return icon
+    }
+}
+
+/**
+ * Validation helper class for form and data validation
+ */
+class ValidationHelper {
+    /**
+     * Validate bot form data
+     * @param {Object} formData - Form data to validate
+     * @returns {Object} Validation result with isValid and errors
+     */
+    static validateBotForm(formData) {
+        const errors = []
+
+        if (!formData.name?.trim()) {
+            errors.push('El nombre es requerido')
+        }
+
+        if (!formData.description?.trim()) {
+            errors.push('La descripción es requerida')
+        }
+
+        if (!formData.chatbaseId?.trim()) {
+            errors.push('El ID de Chatbase es requerido')
+        }
+
+        if (formData.avatar && !ValidationHelper.isValidUrl(formData.avatar)) {
+            errors.push('La URL del avatar no es válida')
+        }
+
+        return {
+            isValid: errors.length === 0,
+            errors,
+        }
+    }
+
+    /**
+     * Validate imported bot data
+     * @param {Array} importedData - Data to validate
+     * @returns {Object} Validation result
+     */
+    static validateImportData(importedData) {
+        if (!Array.isArray(importedData)) {
+            return {
+                isValid: false,
+                error: 'El archivo JSON debe contener un array de bots',
+            }
+        }
+
+        const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
+
+        for (const bot of importedData) {
+            if (!bot || typeof bot !== 'object') {
+                return {
+                    isValid: false,
+                    error: 'Cada elemento debe ser un objeto válido',
+                }
+            }
+
+            for (const field of requiredFields) {
+                if (!(field in bot)) {
+                    return {
+                        isValid: false,
+                        error: `El campo '${field}' es requerido en todos los bots`,
+                    }
+                }
+            }
+
+            if (typeof bot.isDefault !== 'boolean') {
+                return {
+                    isValid: false,
+                    error: 'El campo isDefault debe ser true o false',
+                }
+            }
+        }
+
+        return { isValid: true }
+    }
+
+    /**
+     * Check if a string is a valid URL
+     * @param {string} url - URL to validate
+     * @returns {boolean} True if valid URL
+     */
+    static isValidUrl(url) {
+        try {
+            new URL(url)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /**
+     * Validate file for import
+     * @param {File} file - File to validate
+     * @returns {Object} Validation result
+     */
+    static validateImportFile(file) {
+        if (!file) {
+            return {
+                isValid: false,
+                error: 'Por favor selecciona un archivo JSON',
+            }
+        }
+
+        if (!file.name.toLowerCase().endsWith('.json')) {
+            return {
+                isValid: false,
+                error: 'El archivo debe ser de tipo JSON',
+            }
+        }
+
+        return { isValid: true }
+    }
+}
+
+/**
  * Main ChatbaseManager class handles all chat functionality
  */
 class ChatbaseManager {
@@ -97,6 +257,7 @@ class ChatbaseManager {
         this.lastMinimizedBotId = null
         this.isTransitioning = false
         this.currentTheme = 'system'
+        this.elementHelper = ElementHelper
         this.init()
     }
 
@@ -398,17 +559,18 @@ class ChatbaseManager {
      */
     createExpertCard(bot) {
         const card = document.createElement('div')
+        card.id = `expert-card-${bot.id}`
         card.className =
             'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 flex flex-col min-h-[320px]'
 
         card.innerHTML = `
-            <div class="w-10 h-10 mx-auto mb-5">
+            <div class="w-10 h-10 mx-auto mb-5" id="avatar-container-${bot.id}">
                 <div id="avatar-${bot.id}" class="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-sm font-bold uppercase">${this.getInitials(bot.name)}</div>
             </div>
-            <h3 class="text-3xl font-bold text-slate-800 mb-2.5">${bot.name}</h3>
-            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12 flex-grow">${bot.description}</p>
+            <h3 class="text-3xl font-bold text-slate-800 mb-2.5" id="expert-name-${bot.id}">${bot.name}</h3>
+            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12 flex-grow" id="expert-description-${bot.id}">${bot.description}</p>
             <button class="bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95 mt-auto" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
-                HABLAR CON ${bot.name.toUpperCase()}
+                <span id="btn-text-${bot.id}">HABLAR CON ${bot.name.toUpperCase()}</span>
             </button>
         `
 
@@ -465,8 +627,13 @@ class ChatbaseManager {
      * Remove existing floating button
      */
     removeFloatingButton() {
+        // Remove any existing floating buttons (old pattern and new pattern)
         const existingButton = document.getElementById('floating-chat-button')
         if (existingButton) existingButton.remove()
+
+        // Remove buttons with new ID pattern
+        const floatingButtons = document.querySelectorAll('[id^="floating-chat-button-"]')
+        floatingButtons.forEach(button => button.remove())
     }
 
     /**
@@ -476,12 +643,12 @@ class ChatbaseManager {
      */
     createFloatingChatButton(bot, buttonText) {
         const floatingButton = document.createElement('button')
-        floatingButton.id = 'floating-chat-button'
+        floatingButton.id = `floating-chat-button-${bot.id}`
         floatingButton.title = buttonText
         floatingButton.className =
             'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
-        floatingButton.innerHTML = `<div class="i-heroicons-chat-bubble-left-ellipsis w-6 h-6"></div>`
+        floatingButton.innerHTML = `<div class="i-heroicons-chat-bubble-left-ellipsis w-6 h-6" id="floating-chat-icon-${bot.id}"></div>`
 
         floatingButton.onclick = () => this.handleFloatingButtonClick(bot)
         document.body.appendChild(floatingButton)
@@ -599,27 +766,45 @@ class ChatbaseManager {
 
         button.disabled = false
 
+        const buttonTextElement = button.querySelector(`#btn-text-${botId}`)
+
         switch (state) {
             case 'active':
                 button.className =
                     'bg-brand-green text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-green-700 hover:scale-105 active:scale-95'
-                button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
+                if (buttonTextElement) {
+                    buttonTextElement.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
+                } else {
+                    button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
+                }
                 break
             case 'minimized':
                 button.className =
                     'bg-brand-orange text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-orange-dark hover:scale-105 active:scale-95'
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                if (buttonTextElement) {
+                    buttonTextElement.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                } else {
+                    button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                }
                 break
             case 'loading':
                 button.className =
                     'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5'
-                button.textContent = 'CARGANDO...'
+                if (buttonTextElement) {
+                    buttonTextElement.textContent = 'CARGANDO...'
+                } else {
+                    button.textContent = 'CARGANDO...'
+                }
                 button.disabled = true
                 break
             default:
                 button.className =
                     'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95'
-                button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                if (buttonTextElement) {
+                    buttonTextElement.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                } else {
+                    button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
+                }
         }
 
         console.log(`Button updated for ${bot.name}`)
@@ -731,6 +916,7 @@ class ChatbaseManager {
      */
     createIframe(chatbotId, botId) {
         const iframe = document.createElement('iframe')
+        iframe.id = `chatbase-iframe-${botId}`
         iframe.src = `${CONFIG.CHAT_BASE_URL}/chatbot-iframe/${chatbotId}`
         iframe.style.cssText = STYLES.IFRAME
         iframe.allow = 'microphone'
@@ -757,7 +943,8 @@ class ChatbaseManager {
      */
     createCloseButton(botId) {
         const closeBtn = document.createElement('button')
-        closeBtn.innerHTML = `<div class="i-heroicons-chevron-down w-6 h-6"></div>`
+        closeBtn.id = `close-btn-${botId}`
+        closeBtn.innerHTML = `<div class="i-heroicons-chevron-down w-6 h-6" id="close-icon-${botId}"></div>`
         closeBtn.style.cssText = STYLES.CLOSE_BUTTON
 
         this.setupCloseButtonEvents(closeBtn, botId)
@@ -1189,16 +1376,11 @@ class ChatbaseManager {
      * @returns {boolean} True if file is valid
      */
     validateImportFile(file) {
-        if (!file) {
-            alert('Por favor selecciona un archivo JSON')
+        const validation = ValidationHelper.validateImportFile(file)
+        if (!validation.isValid) {
+            alert(validation.error)
             return false
         }
-
-        if (!file.name.toLowerCase().endsWith('.json')) {
-            alert('El archivo debe ser de tipo JSON')
-            return false
-        }
-
         return true
     }
 
@@ -1232,31 +1414,11 @@ class ChatbaseManager {
      * @returns {boolean} True if data is valid
      */
     validateImportData(importedData) {
-        if (!Array.isArray(importedData)) {
-            alert('El archivo JSON debe contener un array de bots')
+        const validation = ValidationHelper.validateImportData(importedData)
+        if (!validation.isValid) {
+            alert(validation.error)
             return false
         }
-
-        const isValidData = importedData.every(bot => {
-            return (
-                bot &&
-                typeof bot === 'object' &&
-                typeof bot.id === 'string' &&
-                typeof bot.name === 'string' &&
-                typeof bot.description === 'string' &&
-                typeof bot.chatbaseId === 'string' &&
-                (bot.avatar === null || typeof bot.avatar === 'string') &&
-                typeof bot.isDefault === 'boolean'
-            )
-        })
-
-        if (!isValidData) {
-            alert(
-                'El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault'
-            )
-            return false
-        }
-
         return true
     }
 
@@ -1297,13 +1459,13 @@ class ChatbaseManager {
                 importButton.className =
                     'bg-brand-green text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-green-700 mr-2.5 flex items-center justify-center gap-2'
                 importButton.innerHTML =
-                    '<div class="i-heroicons-arrow-down-tray w-4 h-4"></div>Importar datos'
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4" id="import-button-icon"></div><span id="import-button-text">Importar datos</span>'
             } else {
                 importButton.disabled = true
                 importButton.className =
                     'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 mr-2.5 flex items-center justify-center gap-2'
                 importButton.innerHTML =
-                    '<div class="i-heroicons-arrow-down-tray w-4 h-4"></div>Importar datos'
+                    '<div class="i-heroicons-arrow-down-tray w-4 h-4" id="import-button-icon"></div><span id="import-button-text">Importar datos</span>'
             }
         }
 
@@ -1315,13 +1477,13 @@ class ChatbaseManager {
                 clearAllButton.className =
                     'bg-red-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-red-700 flex items-center justify-center gap-2'
                 clearAllButton.innerHTML =
-                    '<div class="i-heroicons-exclamation-triangle w-4 h-4"></div>Eliminar todos los bots'
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4" id="clear-all-icon"></div><span id="clear-all-text">Eliminar todos los bots</span>'
             } else {
                 clearAllButton.disabled = true
                 clearAllButton.className =
                     'bg-gray-400 text-white border-none px-5 py-2.5 rounded-md cursor-not-allowed text-sm font-semibold w-full transition-colors duration-300 flex items-center justify-center gap-2'
                 clearAllButton.innerHTML =
-                    '<div class="i-heroicons-exclamation-triangle w-4 h-4"></div>Eliminar todos los bots'
+                    '<div class="i-heroicons-exclamation-triangle w-4 h-4" id="clear-all-icon"></div><span id="clear-all-text">Eliminar todos los bots</span>'
             }
         }
     }
@@ -1357,7 +1519,7 @@ class ChatbaseManager {
     renderBotList() {
         const botList = document.getElementById('botList')
         botList.innerHTML =
-            '<h3 class="mb-2.5 text-lg text-slate-800 font-semibold">Bots actuales</h3>'
+            '<h3 class="mb-2.5 text-lg text-slate-800 font-semibold" id="bot-list-title">Bots actuales</h3>'
 
         this.bots.forEach((bot, index) => {
             const botItem = this.createBotListItem(bot, index)
@@ -1373,22 +1535,23 @@ class ChatbaseManager {
      */
     createBotListItem(bot, index) {
         const botItem = document.createElement('div')
+        botItem.id = `bot-list-item-${bot.id}`
         botItem.className =
             'bg-white border border-gray-100 rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200'
         botItem.innerHTML = `
-            <div class="flex-1">
-                <div class="font-semibold text-slate-800 mb-1">${bot.name}</div>
-                <div class="text-xs text-slate-500 font-mono">ID: ${bot.chatbaseId}</div>
-                ${bot.avatar ? '<div class="text-xs text-slate-500 font-mono">Avatar: Personalizado</div>' : '<div class="text-xs text-slate-500 font-mono">Avatar: Iniciales</div>'}
+            <div class="flex-1" id="bot-info-${bot.id}">
+                <div class="font-semibold text-slate-800 mb-1" id="bot-name-display-${bot.id}">${bot.name}</div>
+                <div class="text-xs text-slate-500 font-mono" id="bot-id-display-${bot.id}">ID: ${bot.chatbaseId}</div>
+                ${bot.avatar ? `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Personalizado</div>` : `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Iniciales</div>`}
             </div>
-            <div class="flex items-center gap-4">
-                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500">
+            <div class="flex items-center gap-4" id="bot-actions-${bot.id}">
+                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500" id="default-radio-label-${bot.id}">
                     <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
-                           onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer">
-                    <span class="select-none">Por defecto</span>
+                           onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer" id="default-radio-${bot.id}">
+                    <span class="select-none" id="default-text-${bot.id}">Por defecto</span>
                 </label>
-                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center gap-1" onclick="chatManager.deleteBot(${index})">
-                    <div class="i-heroicons-trash w-3 h-3"></div>
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center gap-1" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}">
+                    <div class="i-heroicons-trash w-3 h-3" id="delete-bot-icon-${bot.id}"></div>
                 </button>
             </div>
         `
@@ -1432,8 +1595,9 @@ class ChatbaseManager {
      * @returns {boolean} True if valid
      */
     validateBotForm(formData) {
-        if (!formData.name || !formData.description || !formData.chatbaseId) {
-            alert('Por favor, completa todos los campos obligatorios')
+        const validation = ValidationHelper.validateBotForm(formData)
+        if (!validation.isValid) {
+            alert(validation.errors.join('\n'))
             return false
         }
         return true

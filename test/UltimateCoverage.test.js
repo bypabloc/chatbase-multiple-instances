@@ -154,9 +154,7 @@ describe('Ultimate Coverage - Final Push to 95%', () => {
 
             // Verify bot was NOT added
             expect(chatManager.bots).toHaveLength(initialBotCount)
-            expect(global.alert).toHaveBeenCalledWith(
-                'Por favor, completa todos los campos obligatorios'
-            )
+            expect(global.alert).toHaveBeenCalledWith('El nombre es requerido')
         })
     })
 
@@ -174,9 +172,7 @@ describe('Ultimate Coverage - Final Push to 95%', () => {
             const isValid = chatManager.validateBotForm(formData)
 
             expect(isValid).toBe(false)
-            expect(global.alert).toHaveBeenCalledWith(
-                'Por favor, completa todos los campos obligatorios'
-            )
+            expect(global.alert).toHaveBeenCalledWith('El nombre es requerido')
         })
 
         it('should validate form with missing description', () => {
@@ -192,9 +188,7 @@ describe('Ultimate Coverage - Final Push to 95%', () => {
             const isValid = chatManager.validateBotForm(formData)
 
             expect(isValid).toBe(false)
-            expect(global.alert).toHaveBeenCalledWith(
-                'Por favor, completa todos los campos obligatorios'
-            )
+            expect(global.alert).toHaveBeenCalledWith('La descripción es requerida')
         })
 
         it('should validate form with missing chatbaseId', () => {
@@ -210,9 +204,7 @@ describe('Ultimate Coverage - Final Push to 95%', () => {
             const isValid = chatManager.validateBotForm(formData)
 
             expect(isValid).toBe(false)
-            expect(global.alert).toHaveBeenCalledWith(
-                'Por favor, completa todos los campos obligatorios'
-            )
+            expect(global.alert).toHaveBeenCalledWith('El ID de Chatbase es requerido')
         })
 
         it('should validate form with all required fields present', () => {

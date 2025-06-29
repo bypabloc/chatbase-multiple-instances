@@ -233,7 +233,7 @@ describe('Real Code Coverage Tests', () => {
 
             chatManager.createFloatingChatButton(bot, 'Test Button')
 
-            const button = document.getElementById('floating-chat-button')
+            const button = document.getElementById(`floating-chat-button-${bot.id}`)
             expect(button).toBeTruthy()
             expect(button.title).toBe('Test Button')
             expect(button.className).toContain('fixed')
@@ -250,7 +250,7 @@ describe('Real Code Coverage Tests', () => {
             chatManager.bots = [bot]
             chatManager.updateFloatingChatButton()
 
-            const button = document.getElementById('floating-chat-button')
+            const button = document.getElementById(`floating-chat-button-${bot.id}`)
             expect(button).toBeTruthy()
         })
 

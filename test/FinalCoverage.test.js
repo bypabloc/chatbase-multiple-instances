@@ -228,7 +228,7 @@ describe('Final Coverage Push - Target 95%', () => {
 
             expect(isValid).toBe(false)
             expect(global.alert).toHaveBeenCalledWith(
-                'El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault'
+                "El campo 'id' es requerido en todos los bots"
             )
         })
 

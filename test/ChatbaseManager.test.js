@@ -101,32 +101,47 @@ const mockChatbaseManagerClass = class ChatbaseManager {
             return false
         }
 
-        const isValidData = importedData.every(bot => {
-            return (
-                bot &&
-                typeof bot === 'object' &&
-                typeof bot.id === 'string' &&
-                typeof bot.name === 'string' &&
-                typeof bot.description === 'string' &&
-                typeof bot.chatbaseId === 'string' &&
-                (bot.avatar === null || typeof bot.avatar === 'string') &&
-                typeof bot.isDefault === 'boolean'
-            )
-        })
+        const requiredFields = ['id', 'name', 'description', 'chatbaseId', 'avatar', 'isDefault']
 
-        if (!isValidData) {
-            alert(
-                'El archivo JSON no tiene el formato correcto. Cada bot debe tener: id, name, description, chatbaseId, avatar, isDefault'
-            )
-            return false
+        for (const bot of importedData) {
+            if (!bot || typeof bot !== 'object') {
+                alert('Cada elemento debe ser un objeto válido')
+                return false
+            }
+
+            for (const field of requiredFields) {
+                if (!(field in bot)) {
+                    alert(`El campo '${field}' es requerido en todos los bots`)
+                    return false
+                }
+            }
+
+            if (typeof bot.isDefault !== 'boolean') {
+                alert('El campo isDefault debe ser true o false')
+                return false
+            }
         }
 
         return true
     }
 
     validateBotForm(formData) {
-        if (!formData.name || !formData.description || !formData.chatbaseId) {
-            alert('Por favor, completa todos los campos obligatorios')
+        const errors = []
+
+        if (!formData.name?.trim()) {
+            errors.push('El nombre es requerido')
+        }
+
+        if (!formData.description?.trim()) {
+            errors.push('La descripción es requerida')
+        }
+
+        if (!formData.chatbaseId?.trim()) {
+            errors.push('El ID de Chatbase es requerido')
+        }
+
+        if (errors.length > 0) {
+            alert(errors.join('\n'))
             return false
         }
         return true
@@ -298,7 +313,7 @@ describe('ChatbaseManager - Validation', () => {
 
         it('should validate bot structure', () => {
             expect(manager.validateImportData(invalidBots)).toBe(false)
-            expect(alert).toHaveBeenCalledWith(expect.stringContaining('formato correcto'))
+            expect(alert).toHaveBeenCalledWith("El campo 'name' es requerido en todos los bots")
         })
 
         it('should accept valid bot data', () => {
@@ -330,7 +345,7 @@ describe('ChatbaseManager - Validation', () => {
             }
 
             expect(manager.validateBotForm(incompleteForm)).toBe(false)
-            expect(alert).toHaveBeenCalledWith('Por favor, completa todos los campos obligatorios')
+            expect(alert).toHaveBeenCalledWith('La descripción es requerida')
         })
 
         it('should accept complete form data', () => {
