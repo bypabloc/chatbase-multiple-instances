@@ -2,7 +2,7 @@
  * Final tests to push coverage to 95%+ by targeting specific uncovered lines
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest'
 
 // Mock logger
 vi.mock('../src/logger.js', () => ({
@@ -41,6 +41,7 @@ describe('Maximum Coverage Tests - 95% Target', () => {
     let chatManager
 
     beforeEach(async () => {
+        vi.useFakeTimers()
         // Complete DOM setup
         document.body.innerHTML = `
       <div class="container">
@@ -64,6 +65,11 @@ describe('Maximum Coverage Tests - 95% Target', () => {
         // Import script and get manager
         await import('../src/script.js')
         chatManager = window.chatManager
+    })
+
+    afterEach(() => {
+        vi.clearAllTimers()
+        vi.useRealTimers()
     })
 
     describe('Specific Uncovered Code Paths', () => {

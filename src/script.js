@@ -923,8 +923,11 @@ class ChatbaseManager {
         this.disableMobileScroll()
 
         // Add outside click listener with delay
-        setTimeout(() => {
-            document.addEventListener('click', outsideClickHandler)
+        const timeoutId = setTimeout(() => {
+            // Check if document still exists (for test environment)
+            if (typeof document !== 'undefined') {
+                document.addEventListener('click', outsideClickHandler)
+            }
         }, CONFIG.TRANSITION_DELAY)
 
         this.chatInstances[botId] = {
@@ -933,6 +936,7 @@ class ChatbaseManager {
             isVisible: true,
             chatbotId: chatbotId,
             outsideClickHandler: outsideClickHandler,
+            outsideClickTimeout: timeoutId,
         }
     }
 
@@ -1149,6 +1153,12 @@ class ChatbaseManager {
      * @param {string} botId - Bot ID
      */
     hideInstance(instance, _botId) {
+        // Clear any pending timeout
+        if (instance.outsideClickTimeout) {
+            clearTimeout(instance.outsideClickTimeout)
+            instance.outsideClickTimeout = null
+        }
+
         if (instance.outsideClickHandler) {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
@@ -1300,6 +1310,12 @@ class ChatbaseManager {
      * @param {Object} instance - Chat instance
      */
     removeInstanceEventListeners(instance) {
+        // Clear any pending timeout
+        if (instance.outsideClickTimeout) {
+            clearTimeout(instance.outsideClickTimeout)
+            instance.outsideClickTimeout = null
+        }
+
         if (instance.outsideClickHandler) {
             document.removeEventListener('click', instance.outsideClickHandler)
         }
