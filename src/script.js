@@ -305,15 +305,15 @@ class ChatbaseManager {
     createExpertCard(bot) {
         const card = document.createElement('div')
         card.className =
-            'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5'
+            'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 flex flex-col min-h-[320px]'
 
         card.innerHTML = `
             <div class="w-10 h-10 mx-auto mb-5">
                 <div id="avatar-${bot.id}" class="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-sm font-bold uppercase">${this.getInitials(bot.name)}</div>
             </div>
             <h3 class="text-3xl font-bold text-slate-800 mb-2.5">${bot.name}</h3>
-            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12">${bot.description}</p>
-            <button class="bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
+            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12 flex-grow">${bot.description}</p>
+            <button class="bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95 mt-auto" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
                 HABLAR CON ${bot.name.toUpperCase()}
             </button>
         `

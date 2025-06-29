@@ -80,6 +80,11 @@ export default defineConfig({
         'i-heroicons-heart',
         'i-heroicons-cog-6-tooth',
         'i-heroicons-x-mark',
+        // Card layout classes
+        'flex-col',
+        'min-h-[320px]',
+        'flex-grow',
+        'mt-auto',
     ],
     presets: [
         presetWind4({
