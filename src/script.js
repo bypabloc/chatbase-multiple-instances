@@ -200,15 +200,16 @@ class ChatbaseManager {
      */
     createExpertCard(bot) {
         const card = document.createElement('div')
-        card.className = 'expert-card'
+        card.className =
+            'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5'
 
         card.innerHTML = `
-            <div class="avatar-container">
-                <div id="avatar-${bot.id}" class="avatar-fallback">${this.getInitials(bot.name)}</div>
+            <div class="w-30 h-30 mx-auto mb-5">
+                <div id="avatar-${bot.id}" class="w-30 h-30 rounded-full bg-brand-blue text-white flex items-center justify-center text-4xl font-bold uppercase">${this.getInitials(bot.name)}</div>
             </div>
-            <h3 class="expert-name">${bot.name}</h3>
-            <p class="expert-description">${bot.description}</p>
-            <button class="talk-button" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
+            <h3 class="text-3xl font-bold text-slate-800 mb-2.5">${bot.name}</h3>
+            <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12">${bot.description}</p>
+            <button class="bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95" id="btn-${bot.id}" onclick="chatManager.openChatbase('${bot.chatbaseId}', '${bot.id}')">
                 HABLAR CON ${bot.name.toUpperCase()}
             </button>
         `
@@ -227,7 +228,7 @@ class ChatbaseManager {
         img.onload = () => {
             const avatarDiv = document.getElementById(`avatar-${bot.id}`)
             if (avatarDiv) {
-                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="avatar">`
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="w-30 h-30 rounded-full object-cover bg-gray-200">`
             }
         }
         img.onerror = () => {
@@ -279,7 +280,8 @@ class ChatbaseManager {
         const floatingButton = document.createElement('button')
         floatingButton.id = 'floating-chat-button'
         floatingButton.title = buttonText
-        floatingButton.className = 'floating-chat-button floating-chat-button-right'
+        floatingButton.className =
+            'fixed bottom-5 right-5 w-15 h-15 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-lg flex items-center justify-center transition-all duration-300 z-1000 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
         floatingButton.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -374,11 +376,13 @@ class ChatbaseManager {
         if (!button) return
 
         if (isLoading) {
-            button.classList.add('loading')
+            button.className =
+                'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5'
             button.disabled = true
             button.textContent = 'CARGANDO...'
         } else {
-            button.classList.remove('loading')
+            button.className =
+                'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95'
             button.disabled = false
         }
     }
@@ -399,23 +403,28 @@ class ChatbaseManager {
             return
         }
 
-        button.classList.remove('active', 'loading', 'minimized')
         button.disabled = false
 
         switch (state) {
             case 'active':
-                button.classList.add('active')
+                button.className =
+                    'bg-brand-green text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-green-700 hover:scale-105 active:scale-95'
                 button.textContent = `MINIMIZAR ${bot.name.toUpperCase()}`
                 break
             case 'minimized':
+                button.className =
+                    'bg-brand-orange text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-orange-dark hover:scale-105 active:scale-95'
                 button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
                 break
             case 'loading':
-                button.classList.add('loading')
+                button.className =
+                    'bg-gray-500 text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-not-allowed transition-all duration-300 w-full uppercase tracking-wider relative flex items-center justify-center gap-2.5'
                 button.textContent = 'CARGANDO...'
                 button.disabled = true
                 break
             default:
+                button.className =
+                    'bg-brand-blue text-white border-none px-8 py-3 rounded-full text-base font-semibold cursor-pointer transition-all duration-300 w-full uppercase tracking-wider hover:bg-brand-blue-dark hover:scale-105 active:scale-95'
                 button.textContent = `HABLAR CON ${bot.name.toUpperCase()}`
         }
 
@@ -1061,7 +1070,9 @@ class ChatbaseManager {
      * Open configuration modal
      */
     openConfig() {
-        document.getElementById('configModal').classList.add('active')
+        const modal = document.getElementById('configModal')
+        modal.classList.remove('hidden')
+        modal.classList.add('active')
         this.renderBotList()
     }
 
@@ -1069,7 +1080,9 @@ class ChatbaseManager {
      * Close configuration modal
      */
     closeConfig() {
-        document.getElementById('configModal').classList.remove('active')
+        const modal = document.getElementById('configModal')
+        modal.classList.remove('active')
+        setTimeout(() => modal.classList.add('hidden'), 300)
     }
 
     /**
@@ -1078,7 +1091,7 @@ class ChatbaseManager {
     renderBotList() {
         const botList = document.getElementById('botList')
         botList.innerHTML =
-            '<h3 style="margin-bottom: 10px; font-size: 18px; color: #1e293b;">Bots actuales</h3>'
+            '<h3 class="mb-2.5 text-lg text-slate-800 font-semibold">Bots actuales</h3>'
 
         this.bots.forEach((bot, index) => {
             const botItem = this.createBotListItem(bot, index)
@@ -1094,20 +1107,21 @@ class ChatbaseManager {
      */
     createBotListItem(bot, index) {
         const botItem = document.createElement('div')
-        botItem.className = 'bot-item'
+        botItem.className =
+            'bg-slate-50 border border-gray-200 rounded-lg p-4 mb-2.5 flex justify-between items-center'
         botItem.innerHTML = `
-            <div class="bot-info">
-                <div class="bot-name">${bot.name}</div>
-                <div class="bot-id">ID: ${bot.chatbaseId}</div>
-                ${bot.avatar ? '<div class="bot-id">Avatar: Personalizado</div>' : '<div class="bot-id">Avatar: Iniciales</div>'}
+            <div class="flex-1">
+                <div class="font-semibold text-slate-800 mb-1">${bot.name}</div>
+                <div class="text-xs text-slate-500 font-mono">ID: ${bot.chatbaseId}</div>
+                ${bot.avatar ? '<div class="text-xs text-slate-500 font-mono">Avatar: Personalizado</div>' : '<div class="text-xs text-slate-500 font-mono">Avatar: Iniciales</div>'}
             </div>
-            <div class="bot-controls">
-                <label class="default-radio-label">
+            <div class="flex items-center gap-4">
+                <label class="flex items-center gap-1 cursor-pointer text-xs text-slate-500">
                     <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
-                           onchange="chatManager.setDefaultBot('${bot.id}')" class="default-radio">
-                    <span class="radio-text">Por defecto</span>
+                           onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer">
+                    <span class="select-none">Por defecto</span>
                 </label>
-                <button class="delete-bot" onclick="chatManager.deleteBot(${index})">Eliminar</button>
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600" onclick="chatManager.deleteBot(${index})">Eliminar</button>
             </div>
         `
         return botItem
