@@ -419,13 +419,15 @@ describe('High Coverage Tests - Missing Functions', () => {
     })
 
     describe('Event Handlers and Global Functions', () => {
-        it('should handle modal click correctly', () => {
+        it('should handle modal click correctly', async () => {
             const modal = document.getElementById('configModal')
             modal.classList.add('active')
 
             const event = { target: modal }
             chatManager.handleModalClick(event)
 
+            // Modal closing is now async, wait for animation
+            await new Promise(resolve => setTimeout(resolve, 200))
             expect(modal.classList.contains('active')).toBe(false)
         })
 

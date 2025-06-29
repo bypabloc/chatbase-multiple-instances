@@ -44,4 +44,24 @@
     .scrollbar-modern::-webkit-scrollbar-corner {
         background: transparent;
     }
+
+    /* Remove scrollbar arrows */
+    .scrollbar-modern::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    /* Modal closing animation */
+    .closing {
+        opacity: 0 !important;
+        transition: opacity 150ms ease-out !important;
+        /* Keep flex positioning during fade-out */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .closing > div {
+        transform: scale(0.95) !important;
+        transition: transform 150ms ease-out !important;
+    }
 }

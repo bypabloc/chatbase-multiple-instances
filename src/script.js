@@ -122,11 +122,13 @@ class ChatbaseManager {
             this.bots = savedBots ? JSON.parse(savedBots) : []
             this.renderExperts()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
         } catch (error) {
             console.error('Error loading bots:', error)
             this.bots = []
             this.renderExperts()
             this.updateFloatingChatButton()
+            this.updateButtonStates()
         }
     }
 
@@ -1121,8 +1123,12 @@ class ChatbaseManager {
      */
     closeConfig() {
         const modal = document.getElementById('configModal')
-        modal.classList.remove('active')
-        setTimeout(() => modal.classList.add('hidden'), 300)
+        // Add closing class to trigger fade-out animation
+        modal.classList.add('closing')
+        setTimeout(() => {
+            modal.classList.remove('active', 'closing')
+            modal.classList.add('hidden')
+        }, 150)
     }
 
     /**
@@ -1156,7 +1162,7 @@ class ChatbaseManager {
                 ${bot.avatar ? '<div class="text-xs text-slate-500 font-mono">Avatar: Personalizado</div>' : '<div class="text-xs text-slate-500 font-mono">Avatar: Iniciales</div>'}
             </div>
             <div class="flex items-center gap-4">
-                <label class="flex items-center gap-1 cursor-pointer text-xs text-slate-500">
+                <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-500">
                     <input type="radio" name="defaultBot" value="${bot.id}" ${bot.isDefault ? 'checked' : ''} 
                            onchange="chatManager.setDefaultBot('${bot.id}')" class="m-0 cursor-pointer">
                     <span class="select-none">Por defecto</span>

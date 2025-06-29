@@ -247,7 +247,7 @@ describe('Real Code Coverage Tests', () => {
             expect(button).toBeFalsy()
         })
 
-        it('should handle modal operations', () => {
+        it('should handle modal operations', async () => {
             // Test opening modal
             chatManager.openConfig()
             const modal = document.getElementById('configModal')
@@ -255,6 +255,8 @@ describe('Real Code Coverage Tests', () => {
 
             // Test closing modal
             chatManager.closeConfig()
+            // Modal closing is now async, wait for animation
+            await new Promise(resolve => setTimeout(resolve, 200))
             expect(modal.classList.contains('active')).toBe(false)
         })
 

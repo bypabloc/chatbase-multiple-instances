@@ -64,6 +64,14 @@ export default defineConfig({
         'p-6',
         'duration-200',
         'scrollbar-modern',
+        'gap-2',
+        // Clear all button classes
+        'bg-red-600',
+        'hover:bg-red-700',
+        'cursor-pointer',
+        'cursor-not-allowed',
+        'disabled:bg-gray-400',
+        'disabled:cursor-not-allowed',
     ],
     presets: [
         presetWind4({
