@@ -281,7 +281,7 @@ class ChatbaseManager {
         floatingButton.id = 'floating-chat-button'
         floatingButton.title = buttonText
         floatingButton.className =
-            'fixed bottom-5 right-5 w-15 h-15 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-lg flex items-center justify-center transition-all duration-300 z-1000 p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
+            'fixed bottom-6 right-6 w-16 h-16 bg-brand-blue text-white border-none rounded-full cursor-pointer shadow-xl flex items-center justify-center transition-all duration-300 z-[9999] p-0 hover:bg-brand-blue-dark hover:scale-110 hover:shadow-2xl active:scale-95 disabled:bg-gray-400 disabled:cursor-not-allowed disabled:shadow-lg disabled:hover:bg-gray-400 disabled:hover:scale-100 disabled:hover:shadow-lg'
 
         floatingButton.innerHTML = `
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

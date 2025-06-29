@@ -40,6 +40,20 @@ export default defineConfig({
         'hover:bg-brand-orange-dark',
         'hover:scale-105',
         'active:scale-95',
+        // Floating button classes
+        'w-16',
+        'h-16',
+        'bottom-6',
+        'right-6',
+        'shadow-xl',
+        'shadow-2xl',
+        'hover:scale-110',
+        'z-[9999]',
+        'bg-gray-400',
+        'hover:shadow-2xl',
+        // Body width classes
+        'w-full',
+        'max-w-full',
     ],
     presets: [
         presetWind4({
