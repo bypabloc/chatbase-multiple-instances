@@ -2,6 +2,8 @@ import { defineConfig, loadEnv } from 'vite'
 import UnoCSS from 'unocss/vite'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
+import { readdirSync, statSync } from 'fs'
+import { join, extname } from 'path'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
@@ -20,9 +22,55 @@ export default defineConfig(({ mode }) => {
             {
                 name: 'custom-routes',
                 configureServer(server) {
-                    server.middlewares.use((req, _res, next) => {
+                    // Function to scan public directory recursively
+                    function scanDirectory(dirPath, basePath = '') {
+                        const files = []
+                        const items = readdirSync(dirPath)
+
+                        for (const item of items) {
+                            const fullPath = join(dirPath, item)
+                            const stat = statSync(fullPath)
+                            const relativePath = basePath ? `${basePath}/${item}` : item
+
+                            if (stat.isFile()) {
+                                files.push({
+                                    name: item,
+                                    url: `/public/${relativePath}`,
+                                    size: stat.size,
+                                    modified: stat.mtime,
+                                    extension: extname(item).toLowerCase().slice(1),
+                                    path: relativePath,
+                                })
+                            } else if (stat.isDirectory()) {
+                                const subFiles = scanDirectory(fullPath, relativePath)
+                                files.push(...subFiles)
+                            }
+                        }
+
+                        return files
+                    }
+
+                    server.middlewares.use((req, res, next) => {
                         if (req.url === '/files' || req.url === '/files/') {
                             req.url = '/pages/files.html'
+                        } else if (req.url === '/api/files') {
+                            res.setHeader('Content-Type', 'application/json')
+                            res.setHeader('Access-Control-Allow-Origin', '*')
+
+                            try {
+                                const publicDir = resolve(__dirname, 'public')
+                                const files = scanDirectory(publicDir)
+                                res.end(JSON.stringify({ files, success: true }))
+                            } catch (error) {
+                                res.statusCode = 500
+                                res.end(
+                                    JSON.stringify({
+                                        error: error.message,
+                                        success: false,
+                                    })
+                                )
+                            }
+                            return
                         }
                         next()
                     })
