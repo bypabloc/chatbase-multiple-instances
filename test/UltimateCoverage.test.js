@@ -261,7 +261,7 @@ describe('Ultimate Coverage - Final Push to 95%', () => {
             // Verify the item was created with all expected content
             expect(item.innerHTML).toContain('Test Bot')
             expect(item.innerHTML).toContain('TEST123')
-            expect(item.innerHTML).toContain('POR DEFECTO')
+            expect(item.innerHTML).toContain('i-heroicons-check-circle')
             expect(item.innerHTML).toContain('delete-bot-icon-test-bot')
         })
 

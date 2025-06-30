@@ -229,7 +229,7 @@ const mockChatbaseManagerClass = class ChatbaseManager {
         botItem.className += ` ${borderClass}`
 
         botItem.innerHTML = `
-      ${bot.isDefault ? '<div class="default-badge">POR DEFECTO</div>' : ''}
+      ${bot.isDefault ? '<div class="default-badge"><div class="i-heroicons-check-circle"></div></div>' : ''}
       <div class="bot-info">
         <div class="bot-name">${bot.name}</div>
         <div class="bot-id">ID: ${bot.chatbaseId}</div>
@@ -439,8 +439,8 @@ describe('DOM Integration Tests', () => {
             const mariaItem = document.querySelector('[data-testid="bot-item-maria-financiera"]')
             const juanItem = document.querySelector('[data-testid="bot-item-juan-inversion"]')
 
-            expect(mariaItem).toHaveTextContent('POR DEFECTO')
-            expect(juanItem).not.toHaveTextContent('POR DEFECTO')
+            expect(mariaItem.innerHTML).toContain('i-heroicons-check-circle')
+            expect(juanItem.innerHTML).not.toContain('i-heroicons-check-circle')
         })
 
         it('should change default bot when star button is clicked', () => {

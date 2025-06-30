@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archivos Públicos - Chatbase</title>
+    <link rel="stylesheet" href="/uno.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #2c3e50;
+            font-size: 2.5rem;
+        }
+
+        .files-tree {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 40px;
+            font-family: 'Courier New', monospace;
+            line-height: 1.2;
+            font-size: 14px;
+        }
+
+        .tree-item {
+            display: flex;
+            align-items: center;
+            padding: 0;
+            margin: 0;
+            white-space: pre;
+            font-family: 'Courier New', monospace;
+            letter-spacing: -0.5px;
+        }
+
+        .tree-item {
+            color: #2c3e50;
+        }
+
+        .files-grid {
+            display: none;
+        }
+
+        .file-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .file-icon {
+            width: 100%;
+            height: 200px;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: #666;
+        }
+
+        .file-icon.image {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .file-info {
+            padding: 20px;
+        }
+
+        .file-name {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .file-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .file-size {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        .file-date {
+            display: inline-block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #e74c3c;
+            font-size: 1.1rem;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .files-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+    </style>
+</head>
+<body class="font-sans bg-gray-light min-h-screen">
+    <!-- Back to home button -->
+    <a href="/" class="fixed top-5 left-5 flex items-center gap-2 px-4 py-2.5 bg-brand-blue text-white no-underline rounded-lg text-sm font-medium z-50 transition-all duration-300 shadow-md hover:bg-brand-blue-dark hover:-translate-y-0.5 hover:shadow-lg">
+        <div class="i-heroicons-arrow-left w-5 h-5"></div>
+        <span>Volver</span>
+    </a>
+    
+    <div class="container">
+        <h1>Estructura de Archivos</h1>
+        <p style="text-align: center; color: #666; margin-bottom: 20px; font-size: 1.1rem;">
+            Explorador de archivos de la carpeta <code>public/</code>
+        </p>
+        
+        <div style="text-align: center; margin-bottom: 30px;">
+            <button id="copyTreeBtn" class="px-6 py-3 bg-brand-blue text-white rounded-lg font-medium hover:bg-brand-blue-dark transition-colors duration-200 shadow-md hover:shadow-lg">
+                <span class="i-heroicons-clipboard-document w-5 h-5 inline-block mr-2"></span>
+                Copiar Estructura
+            </button>
+        </div>
+        
+        <div id="filesContainer" class="files-tree">
+            <div class="loading">Cargando archivos...</div>
+        </div>
+    </div>
+
+    <script>
+        // File type icons
+        const fileIcons = {
+            image: '🖼️',
+            pdf: '📄',
+            doc: '📝',
+            video: '🎥',
+            audio: '🎵',
+            zip: '📦',
+            default: '📁'
+        };
+
+        // Get file extension
+        function getFileExtension(filename) {
+            return filename.split('.').pop().toLowerCase();
+        }
+
+        // Get file type from extension
+        function getFileType(extension) {
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp'];
+            const videoExtensions = ['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm'];
+            const audioExtensions = ['mp3', 'wav', 'ogg', 'flac', 'aac'];
+            const docExtensions = ['doc', 'docx', 'txt', 'rtf', 'odt', 'md'];
+            const zipExtensions = ['zip', 'rar', '7z', 'tar', 'gz'];
+            const codeExtensions = ['js', 'ts', 'jsx', 'tsx', 'vue', 'svelte', 'html', 'css', 'scss', 'json', 'xml'];
+
+            if (imageExtensions.includes(extension)) return 'image';
+            if (videoExtensions.includes(extension)) return 'video';
+            if (audioExtensions.includes(extension)) return 'audio';
+            if (docExtensions.includes(extension)) return 'doc';
+            if (zipExtensions.includes(extension)) return 'zip';
+            if (codeExtensions.includes(extension)) return 'default';
+            if (extension === 'pdf') return 'pdf';
+            return 'default';
+        }
+
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Format date
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        // Build tree structure from flat file list
+        function buildTree(files) {
+            const tree = {};
+            
+            files.forEach(file => {
+                const pathParts = file.path.split('/');
+                let current = tree;
+                
+                for (let i = 0; i < pathParts.length; i++) {
+                    const part = pathParts[i];
+                    
+                    if (i === pathParts.length - 1) {
+                        // This is a file
+                        current[part] = file;
+                    } else {
+                        // This is a directory
+                        if (!current[part]) {
+                            current[part] = {};
+                        }
+                        current = current[part];
+                    }
+                }
+            });
+            
+            return tree;
+        }
+
+        // Render all files in a proper tree structure
+        function renderFlatTree(files) {
+            const elements = [];
+            
+            // Build directory structure
+            const structure = {
+                directories: {},
+                files: []
+            };
+            
+            files.forEach(file => {
+                const pathParts = file.path.split('/');
+                if (pathParts.length === 1) {
+                    // Root level file
+                    structure.files.push(file);
+                } else if (pathParts.length === 2) {
+                    // File in first level directory
+                    const dirName = pathParts[0];
+                    if (!structure.directories[dirName]) {
+                        structure.directories[dirName] = { files: [], subdirs: {} };
+                    }
+                    structure.directories[dirName].files.push(file);
+                } else if (pathParts.length === 3) {
+                    // File in second level directory (like avatars/docs/)
+                    const firstDir = pathParts[0];
+                    const secondDir = pathParts[1];
+                    
+                    if (!structure.directories[firstDir]) {
+                        structure.directories[firstDir] = { files: [], subdirs: {} };
+                    }
+                    if (!structure.directories[firstDir].subdirs[secondDir]) {
+                        structure.directories[firstDir].subdirs[secondDir] = [];
+                    }
+                    structure.directories[firstDir].subdirs[secondDir].push(file);
+                }
+            });
+            
+            // Get all items for counting
+            const dirNames = Object.keys(structure.directories).sort();
+            const rootFiles = structure.files;
+            const allTopLevelItems = [...dirNames, ...rootFiles.map(f => f.name)];
+            
+            let itemIndex = 0;
+            
+            // Render directories and their contents
+            dirNames.forEach(dirName => {
+                const dir = structure.directories[dirName];
+                const isLastTopLevel = itemIndex === allTopLevelItems.length - 1;
+                
+                // Add main directory
+                const dirItem = document.createElement('div');
+                dirItem.className = 'tree-item';
+                dirItem.textContent = `${isLastTopLevel ? '└──' : '├──'} 📁 ${dirName}/`;
+                elements.push(dirItem);
+                
+                // Count total items in this directory (files + subdirs)
+                const subDirNames = Object.keys(dir.subdirs).sort();
+                const totalDirItems = dir.files.length + subDirNames.length;
+                let dirItemIndex = 0;
+                
+                // Add files in this directory
+                dir.files.forEach(file => {
+                    const isLastInDir = dirItemIndex === totalDirItems - 1;
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'tree-item';
+                    
+                    const extension = getFileExtension(file.name);
+                    const fileType = getFileType(extension);
+                    const icon = fileIcons[fileType];
+                    
+                    const prefix = isLastTopLevel ? '   ' : '│  ';
+                    const connector = isLastInDir ? '└──' : '├──';
+                    
+                    fileItem.textContent = `${prefix}${connector} ${icon} ${file.name} (${formatFileSize(file.size)})`;
+                    elements.push(fileItem);
+                    dirItemIndex++;
+                });
+                
+                // Add subdirectories
+                subDirNames.forEach(subDirName => {
+                    const isLastInDir = dirItemIndex === totalDirItems - 1;
+                    const subDirFiles = dir.subdirs[subDirName];
+                    
+                    // Add subdirectory
+                    const subDirItem = document.createElement('div');
+                    subDirItem.className = 'tree-item';
+                    
+                    const prefix = isLastTopLevel ? '   ' : '│  ';
+                    const connector = isLastInDir ? '└──' : '├──';
+                    
+                    subDirItem.textContent = `${prefix}${connector} 📁 ${subDirName}/`;
+                    elements.push(subDirItem);
+                    
+                    // Add files in subdirectory
+                    subDirFiles.forEach((file, index) => {
+                        const isLastSubFile = index === subDirFiles.length - 1;
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'tree-item';
+                        
+                        const extension = getFileExtension(file.name);
+                        const fileType = getFileType(extension);
+                        const icon = fileIcons[fileType];
+                        
+                        let prefix;
+                        if (isLastTopLevel) {
+                            prefix = isLastInDir ? '      ' : '   │  ';
+                        } else {
+                            prefix = isLastInDir ? '│     ' : '│  │  ';
+                        }
+                        const connector = isLastSubFile ? '└──' : '├──';
+                        
+                        fileItem.textContent = `${prefix}${connector} ${icon} ${file.name} (${formatFileSize(file.size)})`;
+                        elements.push(fileItem);
+                    });
+                    
+                    dirItemIndex++;
+                });
+                
+                itemIndex++;
+            });
+            
+            // Add root files
+            rootFiles.forEach((file, index) => {
+                const isLastFile = itemIndex === allTopLevelItems.length - 1;
+                const fileItem = document.createElement('div');
+                fileItem.className = 'tree-item';
+                
+                const extension = getFileExtension(file.name);
+                const fileType = getFileType(extension);
+                const icon = fileIcons[fileType];
+                
+                fileItem.textContent = `${isLastFile ? '└──' : '├──'} ${icon} ${file.name} (${formatFileSize(file.size)})`;
+                elements.push(fileItem);
+                itemIndex++;
+            });
+            
+            return elements;
+        }
+
+        // Load files dynamically from API
+        async function loadFiles() {
+            const container = document.getElementById('filesContainer');
+            
+            try {
+                // Fetch files from the dynamic API endpoint
+                const response = await fetch('/api/files');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error(data.error || 'Error desconocido al cargar archivos');
+                }
+
+                const files = data.files || [];
+
+                if (files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty">
+                            <div class="empty-icon">📂</div>
+                            <p>No hay archivos públicos disponibles</p>
+                            <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.7;">
+                                Agrega archivos en la carpeta <code>public/</code> para verlos aquí
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Clear container
+                container.innerHTML = '';
+                
+                // Render flat tree structure
+                const treeElements = renderFlatTree(files);
+                treeElements.forEach(element => {
+                    container.appendChild(element);
+                });
+                
+                // Generate text version for copying
+                let treeText = '';
+                treeElements.forEach(element => {
+                    treeText += element.textContent + '\n';
+                });
+                window.currentTreeText = treeText;
+
+            } catch (error) {
+                console.error('Error loading files:', error);
+                container.innerHTML = `
+                    <div class="error">
+                        Error al cargar los archivos: ${error.message}
+                        <p style="font-size: 0.9rem; margin-top: 10px; opacity: 0.8;">
+                            Asegúrate de que el servidor de desarrollo esté ejecutándose
+                        </p>
+                    </div>
+                `;
+            }
+        }
+
+        // Generate text representation of tree for copying
+        function generateTreeText(node, name, level = 0, isLast = true, parentLines = []) {
+            let text = '';
+            const isFile = node.name !== undefined;
+            
+            // Create tree line
+            let lines = '';
+            for (let i = 0; i < level - 1; i++) {
+                lines += parentLines[i] ? '    ' : '│   ';
+            }
+            if (level > 0) {
+                lines += isLast ? '└── ' : '├── ';
+            }
+            
+            // Add current node text
+            if (level > 0) {
+                if (isFile) {
+                    const extension = getFileExtension(node.name);
+                    const fileType = getFileType(extension);
+                    const icon = fileIcons[fileType];
+                    text += `${lines}${icon} ${node.name} (${formatFileSize(node.size)})\n`;
+                } else {
+                    text += `${lines}📁 ${name}/\n`;
+                }
+            }
+            
+            // Process children if this is a directory
+            if (!isFile) {
+                const entries = Object.entries(node);
+                entries.forEach(([key, value], index) => {
+                    const isLastChild = index === entries.length - 1;
+                    const newParentLines = [...parentLines];
+                    newParentLines[level] = isLast;
+                    
+                    text += generateTreeText(value, key, level + 1, isLastChild, newParentLines);
+                });
+            }
+            
+            return text;
+        }
+
+        // Copy tree structure to clipboard
+        function copyTreeStructure() {
+            const container = document.getElementById('filesContainer');
+            const copyBtn = document.getElementById('copyTreeBtn');
+            
+            try {
+                // Get the current tree data
+                const treeText = window.currentTreeText || 'No hay estructura disponible para copiar';
+                
+                navigator.clipboard.writeText(treeText).then(() => {
+                    // Show success feedback
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<span class="i-heroicons-check w-5 h-5 inline-block mr-2"></span>¡Copiado!';
+                    copyBtn.style.backgroundColor = '#10b981';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.style.backgroundColor = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Error copying to clipboard:', err);
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = treeText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    
+                    // Show success feedback
+                    const originalText = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<span class="i-heroicons-check w-5 h-5 inline-block mr-2"></span>¡Copiado!';
+                    copyBtn.style.backgroundColor = '#10b981';
+                    
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalText;
+                        copyBtn.style.backgroundColor = '';
+                    }, 2000);
+                });
+            } catch (error) {
+                console.error('Error copying tree structure:', error);
+                alert('Error al copiar la estructura del árbol');
+            }
+        }
+
+        // Add event listener for copy button
+        document.addEventListener('DOMContentLoaded', function() {
+            const copyBtn = document.getElementById('copyTreeBtn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', copyTreeStructure);
+            }
+        });
+
+        // Load files when page loads
+        loadFiles();
+    </script>
+    
+    <script type="module">
+        import 'uno.css'
+    </script>
+</body>
+</html>

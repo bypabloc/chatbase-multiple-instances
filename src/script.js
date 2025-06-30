@@ -1,8 +1,12 @@
+// @unocss-include
 import { inject } from '@vercel/analytics'
 import 'uno.css'
 import logger from './logger.js'
 
-inject()
+// Only inject Vercel Analytics in production
+if (import.meta.env.PROD) {
+    inject()
+}
 
 /**
  * Configuration constants for the application
@@ -639,11 +643,11 @@ class ChatbaseManager {
         const card = document.createElement('div')
         card.id = `expert-card-${bot.id}`
         card.className =
-            'bg-white border border-gray-200 rounded-2xl p-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 flex flex-col min-h-[320px]'
+            'bg-white border border-gray-200 rounded-2xl pt-20 pb-8 px-8 text-center transition-all duration-300 relative hover:shadow-[0_10px_30px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 flex flex-col min-h-[320px] overflow-visible'
 
         card.innerHTML = `
-            <div class="w-10 h-10 mx-auto mb-5" id="avatar-container-${bot.id}">
-                <div id="avatar-${bot.id}" class="w-10 h-10 rounded-full bg-brand-blue text-white flex items-center justify-center text-sm font-bold uppercase">${this.getInitials(bot.name)}</div>
+            <div style="position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 80px; height: 80px; z-index: 10;" id="avatar-container-${bot.id}">
+                <div id="avatar-${bot.id}" style="width: 80px; height: 80px; border-radius: 50%; background-color: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; text-transform: uppercase; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">${this.getInitials(bot.name)}</div>
             </div>
             <h3 class="text-3xl font-bold text-slate-800 mb-2.5" id="expert-name-${bot.id}">${bot.name}</h3>
             <p class="text-base text-slate-500 leading-relaxed mb-6 min-h-12 flex-grow" id="expert-description-${bot.id}">${bot.description}</p>
@@ -666,7 +670,7 @@ class ChatbaseManager {
         img.onload = () => {
             const avatarDiv = document.getElementById(`avatar-${bot.id}`)
             if (avatarDiv) {
-                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" class="w-10 h-10 rounded-full object-cover bg-gray-200">`
+                avatarDiv.outerHTML = `<img src="${bot.avatar}" alt="${bot.name}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background-color: #e5e7eb; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);">`
             }
         }
         img.onerror = () => {
@@ -1637,13 +1641,19 @@ class ChatbaseManager {
         botItem.className = `${borderClass} ${backgroundClass} rounded-xl p-6 mb-4 flex justify-between items-center shadow-sm hover:shadow-md transition-all duration-200 hover:border-gray-200 relative`
 
         botItem.innerHTML = `
-            ${bot.isDefault ? `<div class="absolute top-2 right-2 bg-brand-blue text-white text-xs px-2 py-1 rounded-full font-semibold" id="default-badge-${bot.id}">POR DEFECTO</div>` : ''}
             <div class="flex-1" id="bot-info-${bot.id}">
                 <div class="font-semibold text-slate-800 mb-1" id="bot-name-display-${bot.id}">${bot.name}</div>
                 <div class="text-xs text-slate-500 font-mono" id="bot-id-display-${bot.id}">ID: ${bot.chatbaseId}</div>
                 ${bot.avatar ? `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Personalizado</div>` : `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Iniciales</div>`}
             </div>
             <div class="flex items-center gap-4" id="bot-actions-${bot.id}">
+                ${
+                    bot.isDefault
+                        ? `<div class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md text-xs flex items-center justify-center" id="default-badge-${bot.id}">
+                    <div class="i-heroicons-check-circle w-3 h-3"></div>
+                </div>`
+                        : ''
+                }
                 <button class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-brand-blue-dark flex items-center justify-center" onclick="chatManager.setDefaultBot('${bot.id}')" id="set-default-btn-${bot.id}" ${bot.isDefault ? 'style="display: none;"' : ''}>
                     <div class="i-heroicons-star w-3 h-3" id="set-default-icon-${bot.id}"></div>
                 </button>
@@ -2003,6 +2013,11 @@ window.setDefaultBot = botId => chatManager.setDefaultBot(botId)
 window.clearAllBots = () => chatManager.clearAllBots()
 window.importFromFile = () => chatManager.importFromFile()
 window.debugChatInstances = () => chatManager.debugChatInstances()
+
+// Expose bot management functions for URL parameter loading
+window.loadBots = () => chatManager.loadBots()
+window.saveBots = bots => chatManager.saveBots(bots)
+window.renderBotGrid = () => chatManager.renderExperts()
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {

@@ -52,7 +52,11 @@
             "linter": {
                 "rules": {
                     "suspicious": {
-                        "noConsole": "off"
+                        "noConsole": "off",
+                        "noDocumentCookie": "off"
+                    },
+                    "complexity": {
+                        "noExcessiveCognitiveComplexity": "off"
                     }
                 }
             }
