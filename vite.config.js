@@ -1,14 +1,54 @@
 import { defineConfig, loadEnv } from 'vite'
 import UnoCSS from 'unocss/vite'
-import { resolve } from 'path'
-import { fileURLToPath } from 'url'
-import { readdirSync, statSync } from 'fs'
-import { join, extname } from 'path'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { readdirSync, statSync } from 'node:fs'
+import { join, extname } from 'node:path'
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
+// Helper function to process HTML files
+function processHtmlFile(item, basePath, inputConfig) {
+    const relativePath = basePath ? `${basePath}/${item}` : item
+    const name = item.replace('.html', '')
+    const entryName = basePath ? `${basePath.replace('/', '_')}_${name}` : name
+
+    inputConfig[entryName] = resolve(__dirname, 'src', relativePath)
+}
+
+// Helper function to check if directory should be scanned
+function shouldScanDirectory(item) {
+    return item !== 'node_modules' && !item.startsWith('.')
+}
+
+// Function to scan src directory for HTML files and generate input config
+function generateInputConfig() {
+    const srcDir = resolve(__dirname, 'src')
+    const inputConfig = {}
+
+    function scanSrcDirectory(dirPath, basePath = '') {
+        const items = readdirSync(dirPath)
+
+        for (const item of items) {
+            const fullPath = join(dirPath, item)
+            const stat = statSync(fullPath)
+
+            if (stat.isFile() && item.endsWith('.html')) {
+                processHtmlFile(item, basePath, inputConfig)
+            } else if (stat.isDirectory() && shouldScanDirectory(item)) {
+                const subPath = basePath ? `${basePath}/${item}` : item
+                scanSrcDirectory(fullPath, subPath)
+            }
+        }
+    }
+
+    scanSrcDirectory(srcDir)
+    return inputConfig
+}
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '')
+    const inputConfig = generateInputConfig()
 
     return {
         // Define environment variables for client
@@ -20,7 +60,7 @@ export default defineConfig(({ mode }) => {
         plugins: [
             UnoCSS(),
             {
-                name: 'custom-routes',
+                name: 'auto-pages-plugin',
                 configureServer(server) {
                     // Function to scan public directory recursively
                     function scanDirectory(dirPath, basePath = '') {
@@ -50,10 +90,36 @@ export default defineConfig(({ mode }) => {
                         return files
                     }
 
+                    // Generate routes for all pages dynamically
+                    function generatePageRoutes() {
+                        const routes = new Map()
+
+                        Object.entries(inputConfig).forEach(([_entryName, fullPath]) => {
+                            const relativePath = fullPath.replace(resolve(__dirname, 'src'), '')
+
+                            if (relativePath.includes('/pages/')) {
+                                // Extract page name from pages directory
+                                const pageName = relativePath
+                                    .replace('/pages/', '')
+                                    .replace('.html', '')
+                                routes.set(`/${pageName}`, `/pages/${pageName}.html`)
+                            }
+                        })
+
+                        return routes
+                    }
+
+                    const pageRoutes = generatePageRoutes()
+
                     server.middlewares.use((req, res, next) => {
-                        if (req.url === '/files' || req.url === '/files/') {
-                            req.url = '/pages/files.html'
-                        } else if (req.url === '/api/files') {
+                        // Handle automatic page routes
+                        const url = req.url?.split('?')[0] // Remove query params
+                        if (pageRoutes.has(url) || pageRoutes.has(`${url}/`)) {
+                            const route = pageRoutes.get(url) || pageRoutes.get(`${url}/`)
+                            req.url = route
+                        }
+                        // Handle API endpoint for files
+                        else if (req.url === '/api/files') {
                             res.setHeader('Content-Type', 'application/json')
                             res.setHeader('Access-Control-Allow-Origin', '*')
 
@@ -97,10 +163,7 @@ export default defineConfig(({ mode }) => {
 
             // Optimizaciones avanzadas
             rollupOptions: {
-                input: {
-                    main: resolve(__dirname, 'src/index.html'),
-                    files: resolve(__dirname, 'src/pages/files.html'),
-                },
+                input: inputConfig,
                 output: {
                     // Nombres de archivos optimizados
                     entryFileNames: 'assets/[name].[hash].js',
