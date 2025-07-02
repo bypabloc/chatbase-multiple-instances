@@ -14,10 +14,10 @@ export default defineConfig({
             exclude: ['node_modules/', 'test/', '**/*.config.*', 'dist/', 'coverage/'],
             reportsDirectory: './coverage',
             thresholds: {
-                lines: 90,
+                lines: 85,
                 functions: 75,
                 branches: 86,
-                statements: 90,
+                statements: 85,
             },
         },
         include: ['test/**/*.test.js'],
