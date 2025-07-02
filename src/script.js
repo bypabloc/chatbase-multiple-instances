@@ -1645,8 +1645,9 @@ class ChatbaseManager {
                 <div class="font-semibold text-slate-800 mb-1" id="bot-name-display-${bot.id}">${bot.name}</div>
                 <div class="text-xs text-slate-500 font-mono" id="bot-id-display-${bot.id}">ID: ${bot.chatbaseId}</div>
                 ${bot.avatar ? `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Personalizado</div>` : `<div class="text-xs text-slate-500 font-mono" id="bot-avatar-display-${bot.id}">Avatar: Iniciales</div>`}
+                <div class="text-xs text-slate-500 mt-1" id="bot-description-display-${bot.id}">${bot.description}</div>
             </div>
-            <div class="flex items-center gap-4" id="bot-actions-${bot.id}">
+            <div class="flex items-center gap-2" id="bot-actions-${bot.id}">
                 ${
                     bot.isDefault
                         ? `<div class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md text-xs flex items-center justify-center" id="default-badge-${bot.id}">
@@ -1654,10 +1655,13 @@ class ChatbaseManager {
                 </div>`
                         : ''
                 }
-                <button class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-brand-blue-dark flex items-center justify-center" onclick="chatManager.setDefaultBot('${bot.id}')" id="set-default-btn-${bot.id}" ${bot.isDefault ? 'style="display: none;"' : ''}>
+                <button class="bg-green-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-green-600 flex items-center justify-center" onclick="chatManager.editBot(${index})" id="edit-bot-btn-${bot.id}" title="Editar bot">
+                    <div class="i-heroicons-pencil w-3 h-3" id="edit-bot-icon-${bot.id}"></div>
+                </button>
+                <button class="bg-brand-blue text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-brand-blue-dark flex items-center justify-center" onclick="chatManager.setDefaultBot('${bot.id}')" id="set-default-btn-${bot.id}" ${bot.isDefault ? 'style="display: none;"' : ''} title="Establecer como predeterminado">
                     <div class="i-heroicons-star w-3 h-3" id="set-default-icon-${bot.id}"></div>
                 </button>
-                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center justify-center" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}">
+                <button class="bg-red-500 text-white border-none px-3 py-1.5 rounded-md cursor-pointer text-xs transition-colors duration-300 hover:bg-red-600 flex items-center justify-center" onclick="chatManager.deleteBot(${index})" id="delete-bot-btn-${bot.id}" title="Eliminar bot">
                     <div class="i-heroicons-trash w-3 h-3" id="delete-bot-icon-${bot.id}"></div>
                 </button>
             </div>
@@ -1734,6 +1738,214 @@ class ChatbaseManager {
         document.getElementById('botDescription').value = ''
         document.getElementById('botAvatar').value = ''
         document.getElementById('botId').value = ''
+    }
+
+    /**
+     * Edit bot by index
+     * @param {number} index - Bot index to edit
+     */
+    editBot(index) {
+        const bot = this.bots[index]
+        if (!bot) return
+
+        // Populate form with current bot data
+        document.getElementById('botName').value = bot.name
+        document.getElementById('botDescription').value = bot.description
+        document.getElementById('botAvatar').value = bot.avatar || ''
+        document.getElementById('botId').value = bot.chatbaseId
+
+        // Change button text and function to update instead of add
+        const addButton = document.getElementById('add-bot-button')
+        addButton.textContent = 'Actualizar Bot'
+        addButton.onclick = () => this.updateBot(index)
+
+        // Change section title
+        const sectionTitle = document.getElementById('add-bot-title')
+        sectionTitle.textContent = `Editando: ${bot.name}`
+
+        // Show cancel button
+        this.showCancelEditButton()
+    }
+
+    /**
+     * Show cancel edit button
+     */
+    showCancelEditButton() {
+        // Check if cancel button already exists
+        if (document.getElementById('cancel-edit-button')) return
+
+        const addButton = document.getElementById('add-bot-button')
+        const cancelButton = document.createElement('button')
+        cancelButton.id = 'cancel-edit-button'
+        cancelButton.className =
+            'bg-gray-500 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-gray-600 mt-2'
+        cancelButton.textContent = 'Cancelar Edición'
+        cancelButton.onclick = () => this.cancelEdit()
+
+        addButton.parentNode.insertBefore(cancelButton, addButton.nextSibling)
+    }
+
+    /**
+     * Cancel edit mode
+     */
+    cancelEdit() {
+        // Clear form
+        this.clearBotForm()
+
+        // Reset button
+        const addButton = document.getElementById('add-bot-button')
+        addButton.textContent = 'Agregar Bot'
+        addButton.onclick = () => this.addBot()
+
+        // Reset section title
+        const sectionTitle = document.getElementById('add-bot-title')
+        sectionTitle.textContent = 'Agregar nuevo bot'
+
+        // Remove cancel button
+        const cancelButton = document.getElementById('cancel-edit-button')
+        if (cancelButton) {
+            cancelButton.remove()
+        }
+    }
+
+    /**
+     * Update bot by index
+     * @param {number} index - Bot index to update
+     */
+    updateBot(index) {
+        const formData = this.getFormData()
+
+        if (!this.validateBotForm(formData)) return
+
+        const originalBot = this.bots[index]
+        const updatedBot = {
+            ...originalBot,
+            name: formData.name,
+            description: formData.description,
+            chatbaseId: formData.chatbaseId,
+            avatar: formData.avatar || null,
+        }
+
+        // Update the ID if name changed
+        updatedBot.id = formData.name.toLowerCase().replace(/\s/g, '-')
+
+        // If ID changed, clean up old chat instance
+        if (originalBot.id !== updatedBot.id && this.chatInstances[originalBot.id]) {
+            this.destroyChatInstance(originalBot.id)
+        }
+
+        this.bots[index] = updatedBot
+        this.saveBots()
+        this.renderExperts()
+        this.renderBotList()
+        this.cancelEdit()
+        this.updateButtonStates()
+    }
+
+    /**
+     * Generate configuration URL with all bots
+     */
+    generateConfigURL() {
+        if (!this.bots || this.bots.length === 0) {
+            alert('No hay bots configurados para exportar')
+            return
+        }
+
+        try {
+            const baseURL = window.location.origin + window.location.pathname
+            const urlParams = new URLSearchParams()
+
+            this.bots.forEach((bot, index) => {
+                const botData = {
+                    id: bot.id,
+                    name: bot.name,
+                    description: bot.description,
+                    chatbaseId: bot.chatbaseId,
+                }
+
+                // Add avatar only if it exists
+                if (bot.avatar) {
+                    botData.avatarUrl = bot.avatar
+                }
+
+                // Add isDefault only if true
+                if (bot.isDefault) {
+                    botData.isDefault = true
+                }
+
+                urlParams.set(`bot_${index + 1}`, JSON.stringify(botData))
+            })
+
+            const fullURL = `${baseURL}?${urlParams.toString()}`
+
+            // Copy to clipboard
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard
+                    .writeText(fullURL)
+                    .then(() => {
+                        this.showURLCopySuccess(fullURL)
+                    })
+                    .catch(() => {
+                        this.showURLCopyFallback(fullURL)
+                    })
+            } else {
+                this.showURLCopyFallback(fullURL)
+            }
+        } catch (error) {
+            logger.error('Error generating config URL:', error)
+            alert('Error al generar la URL de configuración')
+        }
+    }
+
+    /**
+     * Show success message when URL is copied
+     * @param {string} url - The copied URL
+     */
+    showURLCopySuccess(url) {
+        const button = document.getElementById('export-url-button')
+        const originalText = button.innerHTML
+
+        button.innerHTML = '<div class="i-heroicons-check w-4 h-4"></div><span>¡URL copiada!</span>'
+        button.className = button.className.replace(
+            'bg-purple-600 hover:bg-purple-700',
+            'bg-green-600 hover:bg-green-700'
+        )
+
+        setTimeout(() => {
+            button.innerHTML = originalText
+            button.className = button.className.replace(
+                'bg-green-600 hover:bg-green-700',
+                'bg-purple-600 hover:bg-purple-700'
+            )
+        }, 2000)
+
+        logger.log('URL generada:', url)
+    }
+
+    /**
+     * Show fallback when clipboard API is not available
+     * @param {string} url - The URL to show
+     */
+    showURLCopyFallback(url) {
+        // Create a temporary textarea to select and copy
+        const textArea = document.createElement('textarea')
+        textArea.value = url
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        textArea.style.top = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.focus()
+        textArea.select()
+
+        try {
+            document.execCommand('copy')
+            this.showURLCopySuccess(url)
+        } catch (_err) {
+            // If copy fails, show the URL in a prompt
+            prompt('Copia esta URL para compartir la configuración:', url)
+        }
+
+        document.body.removeChild(textArea)
     }
 
     /**
@@ -2008,6 +2220,7 @@ window.openChatbase = (chatbotId, botId) => chatManager.openChatbase(chatbotId, 
 window.openConfig = () => chatManager.openConfig()
 window.closeConfig = () => chatManager.closeConfig()
 window.addBot = () => chatManager.addBot()
+window.editBot = index => chatManager.editBot(index)
 window.deleteBot = index => chatManager.deleteBot(index)
 window.setDefaultBot = botId => chatManager.setDefaultBot(botId)
 window.clearAllBots = () => chatManager.clearAllBots()
