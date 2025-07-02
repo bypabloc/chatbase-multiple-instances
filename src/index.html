@@ -100,6 +100,16 @@
             <div class="pt-6 border-t border-gray-200" id="advanced-options-section">
                 <h3 class="mb-4 text-lg text-slate-800 font-semibold" id="advanced-options-title">Opciones avanzadas</h3>
                 
+                <!-- Export URL Button -->
+                <div class="mb-6" id="export-url-section">
+                    <label class="block text-sm font-semibold text-slate-800 mb-3" id="export-url-label">Compartir configuración</label>
+                    <button class="bg-purple-600 text-white border-none px-5 py-2.5 rounded-md cursor-pointer text-sm font-semibold w-full transition-colors duration-300 hover:bg-purple-700 flex items-center justify-center gap-2" onclick="chatManager.generateConfigURL()" id="export-url-button">
+                        <div class="i-heroicons-link w-4 h-4" id="export-url-icon"></div>
+                        <span id="export-url-text">Copiar URL con configuración</span>
+                    </button>
+                    <div class="mt-2 text-xs text-slate-500" id="export-url-description">Genera una URL que incluye todos los bots configurados</div>
+                </div>
+
                 <!-- Theme Switch -->
                 <div class="mb-6" id="theme-section">
                     <label class="block text-sm font-semibold text-slate-800 mb-3" id="theme-label">Tema de la aplicación</label>
