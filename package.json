@@ -56,7 +56,7 @@
         "terser": "^5.43.1",
         "unocss": "^66.3.2",
         "vite": "^7.0.0",
-        "vitest": "^3.2.4"
+        "vitest": "^4.0.9"
     },
     "dependencies": {
         "@vercel/analytics": "^1.5.0"
